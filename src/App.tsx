@@ -29,11 +29,14 @@ import {
   Telemetry,
 } from "./components";
 import { CameraConnection } from "./camera";
+import { RehearsalScript } from "./RehearsalScript";
+import { analyzeRehearsal, composeBreathMarkers } from "../shared/rehearsal";
 import {
   advancePauseHold,
   clamp,
   decidePace,
   DEMO_SCRIPT,
+  BREATHING_QUIET_WINDOW_MS,
   emptyPauseHold,
   markedScript,
   median,
@@ -48,6 +51,7 @@ import {
 import {
   emptySignal,
   type Baseline,
+  type BreathMarker,
   type PauseEvent,
   type SessionPoint,
   type SignalSnapshot,
@@ -86,6 +90,12 @@ function duration(seconds: number): string {
 
 export default function App() {
   const [script, setScript] = useState(DEMO_SCRIPT);
+  const [takeScript, setTakeScript] = useState<string | null>(null);
+  const takeScriptRef = useRef(script);
+  const [retainedMarkers, setRetainedMarkers] = useState<{
+    script: string;
+    markers: BreathMarker[];
+  } | null>(null);
   const [title, setTitle] = useState("The idea that matters");
   const [baseWpm, setBaseWpm] = useState(130);
   const [fontSize, setFontSize] = useState(() =>
@@ -168,10 +178,85 @@ export default function App() {
     baselineRef.current = next;
     setBaseline(next);
   }, []);
+  const capturePoint = useCallback((at: number): SessionPoint => {
+    const live = signalRef.current;
+    const talkingUsable = live.validation === 0 && trustedTalking(live, at);
+    const breathingUsable =
+      live.validation === 0 &&
+      validBreathing(live.breathing, at) &&
+      talkingUsable &&
+      live.talking === false &&
+      silentSince.current !== null &&
+      at - silentSince.current >= BREATHING_QUIET_WINDOW_MS;
+    return {
+      seconds: (at - sessionStart.current) / 1000,
+      pulse:
+        live.validation === 0 &&
+        validPulse(live.pulse, at, live.source === "simulation")
+          ? live.pulse!.value
+          : null,
+      breathing: breathingUsable ? live.breathing!.value : null,
+      pace: paceRef.current,
+      word: activeWordRef.current,
+      paused: phaseRef.current === "paused" || paceRef.current === 0,
+      talking: talkingUsable ? live.talking : null,
+      breathingUsable,
+    };
+  }, []);
   const words = useMemo(() => scriptWords(script), [script]);
+  const noteScript = takeScript ?? script;
+  const sentenceMoments = useMemo(
+    () =>
+      phase === "review"
+        ? analyzeRehearsal({ script: noteScript, baseline, source, history })
+        : [],
+    [phase, noteScript, baseline, source, history],
+  );
   const markers = useMemo(
-    () => planBreathMarkers(script, baseWpm, baseline, pauses),
-    [script, baseWpm, baseline, pauses],
+    () =>
+      composeBreathMarkers({
+        script,
+        baseMarkers: planBreathMarkers(
+          script,
+          baseWpm,
+          baseline,
+          phase === "rehearsing" || phase === "paused" || script === takeScript
+            ? pauses
+            : [],
+        ),
+        retainedMarkers:
+          retainedMarkers?.script === script ? retainedMarkers.markers : [],
+      }),
+    [script, baseWpm, baseline, pauses, phase, takeScript, retainedMarkers],
+  );
+  const reviewMarkers = useMemo(
+    () =>
+      phase === "review"
+        ? composeBreathMarkers({
+            script: noteScript,
+            baseMarkers: planBreathMarkers(
+              noteScript,
+              baseWpm,
+              baseline,
+              pauses,
+            ),
+            moments: sentenceMoments,
+            retainedMarkers:
+              retainedMarkers?.script === noteScript
+                ? retainedMarkers.markers
+                : [],
+          })
+        : markers,
+    [
+      phase,
+      noteScript,
+      baseWpm,
+      baseline,
+      pauses,
+      sentenceMoments,
+      retainedMarkers,
+      markers,
+    ],
   );
   const decision = decidePace({
     baseWpm,
@@ -346,6 +431,33 @@ export default function App() {
       ];
       setPauses(pausesRef.current);
     }
+    const finalPoint = capturePoint(at);
+    historyRef.current = [...historyRef.current.slice(-1799), finalPoint];
+    setHistory(historyRef.current);
+    const completedScript = takeScriptRef.current;
+    const completedMoments = analyzeRehearsal({
+      script: completedScript,
+      baseline: baselineRef.current,
+      source,
+      history: historyRef.current,
+    });
+    setRetainedMarkers({
+      script: completedScript,
+      markers: composeBreathMarkers({
+        script: completedScript,
+        baseMarkers: planBreathMarkers(
+          completedScript,
+          baseWpm,
+          baselineRef.current,
+          pausesRef.current,
+        ),
+        moments: completedMoments,
+        retainedMarkers:
+          retainedMarkers?.script === completedScript
+            ? retainedMarkers.markers
+            : [],
+      }).filter((marker) => marker.reason !== "rhythm"),
+    });
     silentSince.current = null;
     setFinalDuration((at - sessionStart.current) / 1000);
     stopCamera();
@@ -354,7 +466,7 @@ export default function App() {
     setFocusMode(false);
     setSimulationOpen(false);
     setTelemetryOpen(false);
-  }, [stopCamera, updatePhase]);
+  }, [stopCamera, updatePhase, source, baseWpm, retainedMarkers, capturePoint]);
   const finishRef = useRef(finish);
   finishRef.current = finish;
 
@@ -443,24 +555,7 @@ export default function App() {
         }
       }
       if (timestamp - lastSample > 500) {
-        const live = signalRef.current;
-        const breathUsable =
-          validBreathing(live.breathing, at) && live.talking === false;
-        const point: SessionPoint = {
-          seconds: (at - sessionStart.current) / 1000,
-          pulse:
-            live.validation === 0 &&
-            validPulse(live.pulse, at, live.source === "simulation")
-              ? live.pulse!.value
-              : null,
-          breathing:
-            live.validation === 0 && breathUsable
-              ? live.breathing!.value
-              : null,
-          pace: paceRef.current,
-          word: activeWordRef.current,
-          paused: next.held,
-        };
+        const point = capturePoint(at);
         historyRef.current = [...historyRef.current.slice(-1799), point];
         setHistory(historyRef.current);
         lastSample = timestamp;
@@ -469,7 +564,7 @@ export default function App() {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [phase, baseWpm, words.length]);
+  }, [phase, baseWpm, words.length, capturePoint]);
 
   useEffect(() => {
     if (!running && phase !== "review") {
@@ -488,6 +583,8 @@ export default function App() {
       return;
     }
     if (phase !== "ready") return;
+    takeScriptRef.current = script;
+    setTakeScript(script);
     sessionStart.current = Date.now();
     historyRef.current = [];
     pausesRef.current = [];
@@ -675,10 +772,10 @@ export default function App() {
   const averagePace = movingPaces.length
     ? movingPaces.reduce((sum, value) => sum + value, 0) / movingPaces.length
     : baseWpm;
-  const observedMarkers = markers.filter(
+  const observedMarkers = reviewMarkers.filter(
     (marker) => marker.reason === "pause",
   ).length;
-  const scriptText = markedScript(script, markers);
+  const scriptText = markedScript(noteScript, reviewMarkers);
 
   return (
     <div className={`app-shell ${focusMode ? "is-focused" : ""}`}>
@@ -824,6 +921,13 @@ export default function App() {
                 pace
               </span>
             </div>
+            {retainedMarkers?.script === script &&
+              retainedMarkers.markers.length > 0 && (
+                <p className="carried-marker-note">
+                  {retainedMarkers.markers.length} pause suggestions from your
+                  previous take are ready.
+                </p>
+              )}
             <div className="script-tools">
               <button
                 className="text-button"
@@ -1166,6 +1270,9 @@ export default function App() {
                     : "Give the next take a few deliberate pauses."}
                 </h3>
                 <p>
+                  {sentenceMoments.length > 0
+                    ? `${sentenceMoments.length} sentence locations have markers near recorded rate rises. `
+                    : ""}
                   {observedMarkers
                     ? `${observedMarkers} markers sit near pauses detected during rehearsal. `
                     : ""}
@@ -1173,8 +1280,8 @@ export default function App() {
                   {baseline?.breathing
                     ? " using your quiet breathing baseline"
                     : ""}
-                  . Word positions are approximate; edit them to suit your
-                  delivery.
+                  . These suggestions carry into your next take. Locations
+                  follow the displayed reading line.
                 </p>
               </div>
             </div>
@@ -1192,6 +1299,9 @@ export default function App() {
                       source,
                       sdkVersion: "3.5.0",
                       baseline,
+                      script: noteScript,
+                      markers: reviewMarkers,
+                      sentenceMoments,
                       durationSeconds: finalDuration,
                       pauses,
                       history,
@@ -1213,12 +1323,34 @@ export default function App() {
             </div>
             <h2>A script with breathing room.</h2>
             <p>
-              {markers.length} suggested markers · {observedMarkers} near
-              observed pauses
+              {sentenceMoments.length} flagged sentences ·{" "}
+              {reviewMarkers.length} breath markers
             </p>
-            <pre className="annotated-script" data-testid="annotated-script">
-              {scriptText}
-            </pre>
+            {sentenceMoments.length > 0 && (
+              <div
+                className="sentence-legend"
+                aria-label="Sentence highlight key"
+              >
+                <span className="pulse">
+                  <Heart size={12} /> Pulse rise
+                </span>
+                <span className="breathing">
+                  <Wind size={12} /> Faster quiet breathing
+                </span>
+              </div>
+            )}
+            <p className="sentence-mapping-note" id="sentence-mapping-note">
+              {sentenceMoments.length
+                ? "Highlights estimate sentence locations from the displayed line. Pulse averages 12 seconds; breathing 30 seconds. Tap a highlight for details."
+                : "No sentence flags from usable readings. Phrase breaks and pause suggestions are still available."}
+            </p>
+            <RehearsalScript
+              text={noteScript}
+              markers={reviewMarkers}
+              moments={sentenceMoments}
+              baseline={baseline}
+              source={source}
+            />
             <DownloadButton
               onClick={() => download("cadence-breathe-script.txt", scriptText)}
             >

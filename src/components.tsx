@@ -356,14 +356,23 @@ export function ScriptView({
                 </span>
                 {marked.has(index) && (
                   <span
-                    className={`breath-chip ${marked.get(index)!.reason === "pause" ? "observed" : ""}`}
+                    className={`breath-chip ${marked.get(index)!.reason === "pause" ? "observed" : marked.get(index)!.reason}`}
+                    data-marker-reason={marked.get(index)!.reason}
                     title={
                       marked.get(index)!.reason === "pause"
                         ? "Near a pause observed in rehearsal"
-                        : "Suggested pause at a natural phrase break"
+                        : marked.get(index)!.reason === "pulse"
+                          ? "Pause suggested near a pulse rise in an earlier rehearsal"
+                          : marked.get(index)!.reason === "breathing"
+                            ? "Pause suggested near faster quiet breathing in an earlier rehearsal"
+                            : "Suggested pause at a natural phrase break"
                     }
                   >
-                    <Wind size={11} /> breathe
+                    <Wind size={11} />{" "}
+                    {marked.get(index)!.reason === "pulse" ||
+                    marked.get(index)!.reason === "breathing"
+                      ? "[ BREATHE ]"
+                      : "breathe"}
                   </span>
                 )}
               </span>

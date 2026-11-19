@@ -31,3 +31,5 @@ Breathing is a 30-second estimate and unreliable during speech. Do not describe 
 - Show enough of the live telemetry and camera consent flow for judges to connect the behavior with the SDK integration in the public repository.
 
 The app does not measure actual spoken words per minute. Call the changing number **prompter pace**, and describe marker word positions as approximate.
+
+In the rehearsal review, show the highlighted sentence locations and tap one to reveal its time and rate estimates. Highlights follow the displayed line and do not prove which words caused a change. If no eligible rise occurs in the live take, demonstrate this feature separately under the visible Simulation label. Save the annotated script, then choose **Rehearse again** to show that `[ BREATHE ]` suggestions carry into the next take without changing the original word count.

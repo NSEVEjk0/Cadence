@@ -29,7 +29,22 @@ export interface Baseline {
 
 export interface BreathMarker {
   afterWord: number;
-  reason: "rhythm" | "pause";
+  reason: "rhythm" | "pause" | "pulse" | "breathing";
+}
+
+export interface ScriptSentence {
+  sentenceIndex: number;
+  start: number;
+  end: number;
+  firstWord: number;
+  lastWord: number;
+}
+
+export interface SentenceMoment extends ScriptSentence {
+  firstSeenSeconds: number;
+  lastSeenSeconds: number;
+  pulsePeak: number | null;
+  breathingPeak: number | null;
 }
 
 export interface PauseEvent {
@@ -45,6 +60,8 @@ export interface SessionPoint {
   pace: number;
   word: number;
   paused: boolean;
+  talking?: boolean | null;
+  breathingUsable?: boolean;
 }
 
 export interface TransportStats {

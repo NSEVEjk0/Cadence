@@ -38,6 +38,7 @@ test("simulation adapts scrolling, holds an observed pause, and exports a marked
   await expect(
     page.getByRole("heading", { name: "Find your rhythm." }),
   ).toBeVisible();
+  const originalScript = await page.getByLabel("Your script").inputValue();
   await page.getByRole("button", { name: "Connect camera" }).click();
   await expect(
     page.getByRole("button", { name: "Consent & connect camera" }),
@@ -107,11 +108,59 @@ test("simulation adapts scrolling, holds an observed pause, and exports a marked
   await expect(page.getByTestId("annotated-script")).toContainText(
     "[ BREATHE ]",
   );
+  const pulseHighlights = page
+    .getByTestId("annotated-script")
+    .locator('mark[data-review-reasons~="pulse"]');
+  expect(await pulseHighlights.count()).toBeGreaterThan(0);
+  await pulseHighlights.first().click();
+  const detail = page.getByRole("dialog");
+  await expect(
+    detail.getByText("Simulated readings", { exact: true }),
+  ).toBeVisible();
+  await expect(detail.locator(".moment-values")).toContainText("104");
+  await expect(detail.locator(".moment-values")).toContainText("44% above");
+  await detail.getByRole("button", { name: "Close dialog" }).click();
+  expect(
+    (await page.getByTestId("annotated-script").textContent())?.replaceAll(
+      " [ BREATHE ]",
+      "",
+    ),
+  ).toBe(originalScript);
   const downloaded = page.waitForEvent("download");
   await page.getByRole("button", { name: "Save marked script" }).click();
   expect((await downloaded).suggestedFilename()).toBe(
     "cadence-breathe-script.txt",
   );
+  await page.getByRole("button", { name: "Studio", exact: true }).click();
+  await page
+    .getByLabel("Your script")
+    .fill(
+      "A new draft should have its own sentences. This is a different take.",
+    );
+  await expect(
+    page
+      .getByLabel("Teleprompter script")
+      .locator('.breath-chip[data-marker-reason="pulse"]'),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: /Rehearsal notes/u }).click();
+  expect(
+    (await page.getByTestId("annotated-script").textContent())?.replaceAll(
+      " [ BREATHE ]",
+      "",
+    ),
+  ).toBe(originalScript);
+  expect(await pulseHighlights.count()).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Studio", exact: true }).click();
+  await page.getByLabel("Your script").fill(originalScript);
+  await page.getByRole("button", { name: /Rehearsal notes/u }).click();
+  await page.getByRole("button", { name: "Rehearse again" }).click();
+  await expect(page.getByLabel("Your script")).toHaveValue(originalScript);
+  expect(
+    await page
+      .getByLabel("Teleprompter script")
+      .locator('.breath-chip[data-marker-reason="pulse"]')
+      .count(),
+  ).toBeGreaterThan(0);
   expect(errors).toEqual([]);
 });
 
@@ -159,6 +208,17 @@ test("faster quiet breathing waits for a full window and respects reduced motion
   await expect(page.getByTestId("breath-cue")).toHaveCount(0);
   await page.getByRole("button", { name: "Hide simulation controls" }).click();
   await page.getByRole("button", { name: "Finish", exact: true }).click();
+  expect(
+    await page
+      .getByTestId("annotated-script")
+      .locator('mark[data-review-reasons~="breathing"]')
+      .count(),
+  ).toBeGreaterThan(0);
+  await expect(
+    page
+      .getByTestId("annotated-script")
+      .locator('mark[data-review-reasons~="pulse"]'),
+  ).toHaveCount(0);
 });
 
 test("speaking pauses get a minimum hold, resume moving, and preserve observed durations", async ({
