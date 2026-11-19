@@ -490,71 +490,78 @@ h1 em {
   height: 418px;
   overflow-y: auto;
   position: relative;
+  background: #18372b;
   scroll-behavior: auto;
   scrollbar-width: none;
   overscroll-behavior: contain;
-  mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 9%,
-    #000 78%,
-    transparent
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 9%,
-    #000 78%,
-    transparent
-  );
 }
 .script-viewport::-webkit-scrollbar {
   display: none;
 }
 .prompter-copy {
+  position: relative;
+  z-index: 2;
   font-family: "Instrument Serif", Georgia, serif;
   letter-spacing: -0.6px;
   line-height: 1.45;
-  padding: 125px 65px 295px;
+  padding: calc(
+      (var(--stage-height, 418px) - var(--reading-line-height, 55px)) / 2
+    )
+    65px
+    calc((var(--stage-height, 418px) + var(--reading-line-height, 55px)) / 2);
   overflow-wrap: anywhere;
   font-weight: 400;
 }
 .word-read {
-  color: #b9c2ac;
+  color: #aabda2;
   transition: color 0.5s;
 }
 .word-current {
-  color: #2e4836;
+  color: #ffffff;
   transition: color 0.5s;
 }
 .word-ahead {
-  color: #b1baaa;
+  color: #d5e2ce;
   transition: color 0.5s;
+}
+.empty-copy {
+  color: #d5e2ce;
 }
 .reading-guide {
   position: sticky;
-  top: 30%;
+  top: 50%;
   height: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 25px;
-  color: #adc796;
   z-index: 1;
+  pointer-events: none;
+}
+.reading-guide::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: calc(var(--reading-line-height, 55px) / -2);
+  height: var(--reading-line-height, 55px);
+  background: #254b38;
+  border-top: 1px solid #527252;
+  border-bottom: 1px solid #527252;
+  z-index: -1;
 }
 .reading-guide > span:first-child {
   width: 0;
   height: 0;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-left: 6px solid #aac58f;
+  border-left: 6px solid #d4e6b9;
 }
 .reading-guide > span:last-child {
   width: 0;
   height: 0;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-right: 6px solid #aac58f;
+  border-right: 6px solid #d4e6b9;
 }
 .breath-chip {
   font-family: "DM Sans", Arial, sans-serif;
@@ -569,7 +576,7 @@ h1 em {
   padding: 4px 7px;
   background: #e5eed7;
   border: 1px solid #d9e6c4;
-  color: #84956c;
+  color: #274631;
   border-radius: 4px;
   margin: 0 5px;
   transform: translateY(-3px);
@@ -577,7 +584,7 @@ h1 em {
 }
 .breath-chip.observed {
   background: #d4e4bd;
-  color: #587744;
+  color: #2d481f;
   border-color: #c8d8b2;
 }
 .mirrored .prompter-copy {
@@ -1665,8 +1672,6 @@ dialog::backdrop {
   min-height: 0;
 }
 .is-focused .prompter-copy {
-  padding-top: calc(30dvh - 50px);
-  padding-bottom: 70dvh;
   max-width: 1100px;
   margin: auto;
 }
@@ -2026,7 +2031,8 @@ dialog::backdrop {
     height: 310px;
   }
   .prompter-copy {
-    padding: 93px 31px 217px;
+    padding-left: 31px;
+    padding-right: 31px;
     letter-spacing: -0.5px;
     line-height: 1.45;
   }
@@ -2309,8 +2315,6 @@ dialog::backdrop {
     padding: 20px 18px;
   }
   .is-focused .prompter-copy {
-    padding-top: calc(30dvh - 50px);
-    padding-bottom: 70dvh;
     padding-left: 33px;
     padding-right: 33px;
   }

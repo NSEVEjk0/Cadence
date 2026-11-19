@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import {
   Activity,
   ArrowDownToLine,
@@ -281,14 +281,29 @@ export function ScriptView({
 }) {
   const words = scriptWords(text);
   const marked = new Map(markers.map((marker) => [marker.afterWord, marker]));
+  useLayoutEffect(() => {
+    const node = viewportRef.current;
+    if (!node) return;
+    const measure = () =>
+      node.style.setProperty("--stage-height", `${node.clientHeight}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [viewportRef]);
   return (
     <div
       className={`script-viewport ${mirror ? "mirrored" : ""}`}
       ref={viewportRef}
       tabIndex={0}
       aria-label="Teleprompter script"
+      style={
+        {
+          "--reading-line-height": `${fontSize * 1.45}px`,
+        } as React.CSSProperties
+      }
     >
-      <div className="reading-guide">
+      <div className="reading-guide" aria-hidden="true">
         <span />
         <span />
       </div>

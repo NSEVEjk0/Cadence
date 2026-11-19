@@ -376,7 +376,7 @@ export default function App() {
           (((maxScroll / words.length) * paceRef.current) / 60) * dt;
         if (timestamp - lastUi > 180) {
           const readingLine =
-            node.getBoundingClientRect().top + node.clientHeight * 0.3;
+            node.getBoundingClientRect().top + node.clientHeight * 0.5;
           const spans = [
             ...content.current.querySelectorAll<HTMLElement>("[data-word]"),
           ];
