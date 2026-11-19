@@ -18,13 +18,14 @@ Use the notes below to write the submission in your own words. The repository an
 
 - Add a public link to the final 2–3 minute video, with real camera consent and actual live Presage signal footage.
 - Describe any simulation segment explicitly.
-- Public app hosting is optional under the challenge rules. The public studio can still be linked for the simulation and user-key workflow; do not publish the operator's private room link.
+- Public studio: https://projected-actual-scotia-nominations.trycloudflare.com/. This temporary preview supports simulation and the user-key workflow; do not publish the operator's private room link. Public hosting is optional under the challenge rules.
 - Use the recording sequence in [DEMO.md](DEMO.md).
 
 ## Code
 
-- Add the public GitHub repository URL after publication.
+- Public GitHub repository: https://github.com/NSEVEjk0/Cadence.
 - Point judges to the README's setup and API-key instructions.
+- Explain the three separate parts: the teleprompter interface, the phone-camera/native SDK integration, and the pure adaptive pacing rules. The README maps each part to its implementation and verification.
 - Useful files: `server/worker.ts` (actual native SDK configuration and input); `shared/metrics.ts` (SDK packet normalization); `shared/engine.ts` (quality gates and adaptive rules); `src/camera.ts` (consent-triggered video transport and stop behavior).
 - Credit Presage and the dependencies, and describe AI assistance honestly if you choose to discuss it.
 

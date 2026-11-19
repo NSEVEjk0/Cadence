@@ -68,6 +68,16 @@ The owner opens `https://your-app/#room=their_private_token`. The fragment is re
 
 ## How the integration works
 
+The app separates the teleprompter, camera integration, and pacing rules so the interface can be exercised before connecting a real camera.
+
+| Layer | Main files | How to verify it |
+| ----- | ---------- | ---------------- |
+| Teleprompter interface | `src/App.tsx`, `src/components.tsx`, `src/styles.css` | Use the labeled simulation to check scrolling, text controls, pause/resume, telemetry, and exports on desktop and phone layouts. |
+| Camera and native SDK | `src/camera.ts`, `server/worker.ts`, `shared/metrics.ts` | Run `npm run sdk:check` on the server, then use a consented phone-camera session to check actual signal acquisition. |
+| Adaptive pacing | `shared/engine.ts` | Run `npm test` to check baseline-relative pulse response, signal quality and freshness, speaking-pause holds, and phrase markers independently of the SDK. |
+
+For the hosted version, the phone's browser handles camera access and the VPS runs the official Node.js SDK. Timestamped phone-camera frames enter its custom-input interface, so the server can process them without a physical webcam. The SDK's native runtime is installed through npm; Cadence does not require a hand-written C++ integration. A successful runtime check establishes installation and configuration, while reliable human readings still require a real camera rehearsal.
+
 ```text
 Phone browser
   consent -> getUserMedia(video only) -> timestamped JPEG camera frames
