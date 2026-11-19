@@ -1,0 +1,409 @@
+:root {
+  color-scheme: light;
+}
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.theme-toggle:hover {
+  background: var(--line);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: #e6eddf;
+  background: #121a16;
+  --ink: #e6eddf;
+  --muted: #a9b6a0;
+  --green: #bdd69b;
+  --lime: #d4e6b9;
+  --line: #344337;
+  --paper: #1d2821;
+  --surface-soft: #243226;
+  --surface-active: #33492d;
+  --accent: #c0d69f;
+  --on-accent: #1b2917;
+  --faint: #99aa90;
+  --amber-surface: #352e20;
+  --amber-line: #68563a;
+  --amber-text: #e5c995;
+  --blue-surface: #23343e;
+  --blue-line: #456273;
+  --blue-text: #b8d6e4;
+}
+
+:root[data-theme="dark"] ::selection {
+  background: #526b3e;
+  color: #f5f8ee;
+}
+
+:root[data-theme="dark"]
+  :is(
+    .site-header,
+    .brand-caption,
+    .card,
+    .camera-status,
+    .small-tag,
+    .script-desk textarea,
+    .desk-divider,
+    .desk-tip,
+    .prompter-heading,
+    .rehearsal-badge,
+    .prompter-controls,
+    .camera-pacing-control,
+    .prompter-bottom,
+    .step-icon,
+    footer,
+    .telemetry,
+    .telemetry-body,
+    .telemetry-chart,
+    .telemetry-note,
+    .calibration-card,
+    .live-camera-strip,
+    .review-stats,
+    .review-chart > svg,
+    .review-insight,
+    .secondary-button,
+    .annotated-script,
+    .moment-values > div,
+    dialog,
+    .connection-icon,
+    .consent-box,
+    .or-divider > span,
+    .simulation-choice,
+    .settings-note,
+    .developer-settings,
+    .privacy-footnote,
+    .private-room-ready
+  ) {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"]
+  :is(
+    .brand-caption,
+    .site-header nav button,
+    .eyebrow,
+    .intro-copy,
+    .intro-aside p,
+    .desk-helper,
+    .script-meta,
+    .text-button,
+    .pace-setting small,
+    .range-labels,
+    .desk-tip,
+    .desk-tip p,
+    .rehearsal-badge,
+    .pace-readout > span,
+    .pace-readout small,
+    .focus-button,
+    .pace-feedback,
+    .camera-pacing-control p,
+    .prompter-bottom,
+    .how-it-works,
+    .how-it-works p > span,
+    footer,
+    .powered-by strong,
+    .telemetry-toggle,
+    .unit,
+    .telemetry-toggle > .lucide-chevron-down,
+    .telemetry-title,
+    .telemetry-values > div > span,
+    .telemetry-values strong small,
+    .telemetry-values em,
+    .telemetry-row,
+    .telemetry-note,
+    .calibration-card p,
+    .calibration-card small,
+    .live-camera-strip,
+    .review-intro,
+    .review-stats > div > span,
+    .review-stats small,
+    .review-chart > div:first-child > span,
+    .chart-scale,
+    .review-insight p,
+    .annotated-card > p,
+    .annotated-card > .sentence-mapping-note,
+    .modal-inner .moment-timing,
+    .modal-inner .moment-method,
+    .moment-values span,
+    .moment-values small,
+    .moment-values p,
+    .download-note,
+    .quiet-note,
+    .modal-close,
+    .modal-lead,
+    .connection-options p,
+    .field-label,
+    .field-help,
+    .checkbox-row,
+    .consent-box,
+    .consent-box p,
+    .or-divider,
+    .simulation-choice small,
+    .settings-field > label,
+    .settings-note,
+    .settings-note p,
+    .developer-settings,
+    .developer-settings summary,
+    .developer-settings small,
+    .privacy-detail,
+    .privacy-detail p,
+    .privacy-footnote,
+    .private-room-ready p
+  ) {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .download-note {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"]
+  :is(
+    .script-title,
+    .script-desk textarea,
+    .intro-aside strong,
+    .pace-setting label,
+    .desk-tip strong,
+    .prompter-heading h2,
+    .camera-pacing-label,
+    .how-it-works strong,
+    .telemetry-values strong,
+    .review-stats strong,
+    .review-insight h3,
+    .annotated-script,
+    .modal-inner .moment-sentence,
+    .moment-values strong,
+    .simulation-choice strong,
+    .privacy-detail h3,
+    .private-room-ready strong
+  ) {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"]
+  :is(
+    .brand-dot,
+    h1 em,
+    .mini-wave,
+    .text-button:hover,
+    .camera-status,
+    .finish-button,
+    .step-icon,
+    .telemetry-mini,
+    .telemetry-mini svg,
+    .telemetry-row b,
+    .review-insight,
+    .secondary-button,
+    .connection-icon,
+    .field-help a,
+    .consent-box p button,
+    .consent-box .checkbox-row,
+    .simulation-choice,
+    .privacy-detail a,
+    .privacy-detail code,
+    .private-room-ready,
+    .script-desk .carried-marker-note
+  ) {
+  color: var(--accent);
+}
+
+:root[data-theme="dark"]
+  :is(
+    .small-tag,
+    .script-desk textarea,
+    .desk-tip,
+    .rehearsal-badge,
+    .step-icon,
+    .calibration-card,
+    .live-camera-strip,
+    .review-insight,
+    .annotated-script,
+    .moment-values > div,
+    .connection-icon,
+    .consent-box,
+    .settings-note,
+    .private-room-ready
+  ) {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .small-tag {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] :is(.secondary-button, .simulation-choice) {
+  background: var(--paper);
+}
+
+:root[data-theme="dark"]
+  :is(
+    .icon-button:hover,
+    .site-header nav button.active,
+    .camera-status.on,
+    .secondary-button:hover
+  ) {
+  background: var(--surface-active);
+  color: var(--accent);
+}
+
+:root[data-theme="dark"] input[type="range"] {
+  accent-color: var(--accent);
+  background: #3a4c34;
+}
+
+:root[data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
+  background: var(--accent);
+  border-color: var(--paper);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+:root[data-theme="dark"] input[type="range"]::-moz-range-thumb {
+  background: var(--accent);
+  border-color: var(--paper);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+:root[data-theme="dark"] :is(.progress-track, .calibration-track) {
+  background: var(--line);
+}
+
+:root[data-theme="dark"] :is(.play-button, .primary-button) {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="dark"]
+  :is(.play-button:hover, .primary-button:hover:enabled) {
+  background: #d3e5b7;
+}
+
+:root[data-theme="dark"] input.camera-pacing-switch {
+  background: var(--line);
+  border-color: #677a5d;
+}
+
+:root[data-theme="dark"] input.camera-pacing-switch:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+:root[data-theme="dark"] input.camera-pacing-switch::before {
+  background: #edf3e5;
+}
+
+:root[data-theme="dark"] input.camera-pacing-switch:checked::before {
+  background: var(--on-accent);
+}
+
+:root[data-theme="dark"] .telemetry {
+  background: #1d2821f2;
+  box-shadow: 0 8px 30px #050b0750;
+}
+
+:root[data-theme="dark"]
+  :is(
+    .error-banner,
+    .simulation-banner,
+    .simulation-panel,
+    .simulation-presets button,
+    .rehearsal-badge.simulated,
+    .simulation-tag,
+    .modal-error
+  ) {
+  background: var(--amber-surface);
+  border-color: var(--amber-line);
+  color: var(--amber-text);
+}
+
+:root[data-theme="dark"]
+  :is(.simulation-banner > button, .simulation-panel > p) {
+  color: var(--amber-text);
+}
+
+:root[data-theme="dark"] .simulation-panel input[type="range"] {
+  background: var(--amber-line);
+}
+
+:root[data-theme="dark"] .breath-chip {
+  background: var(--surface-active);
+  border-color: #536a41;
+  color: #d8e8c2;
+}
+
+:root[data-theme="dark"] :is(.breath-chip.observed, .review-breath-marker) {
+  background: #3a5030;
+  border-color: #647f4e;
+  color: #d8e8c2;
+}
+
+:root[data-theme="dark"]
+  :is(.breath-chip.pulse, .sentence-legend .pulse, .sentence-highlight.pulse) {
+  background: var(--amber-surface);
+  border-color: var(--amber-line);
+  color: var(--amber-text);
+}
+
+:root[data-theme="dark"]
+  :is(
+    .breath-chip.breathing,
+    .sentence-legend .breathing,
+    .sentence-highlight.breathing
+  ) {
+  background: var(--blue-surface);
+  border-color: var(--blue-line);
+  color: var(--blue-text);
+}
+
+:root[data-theme="dark"] .sentence-highlight.both {
+  background: linear-gradient(
+    180deg,
+    var(--amber-surface) 0 50%,
+    var(--blue-surface) 50% 100%
+  );
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .review-chart > svg {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 29px,
+    var(--line) 29px 30px
+  );
+}
+
+:root[data-theme="dark"] dialog {
+  background: var(--paper);
+  box-shadow: 0 20px 80px #0007;
+}
+
+:root[data-theme="dark"] dialog::backdrop {
+  background: #070e0bc2;
+}
+
+:root[data-theme="dark"] #api-key {
+  border-color: var(--line);
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] #api-key::placeholder {
+  color: var(--faint);
+}
+
+:root[data-theme="dark"] :is(.script-desk textarea, .annotated-script) {
+  scrollbar-color: #566b46 transparent;
+}
+
+@media (max-width: 700px) {
+  .header-actions > .theme-toggle {
+    width: 32px;
+    height: 32px;
+  }
+}

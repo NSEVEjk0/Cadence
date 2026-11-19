@@ -30,6 +30,7 @@ import {
 } from "./components";
 import { CameraConnection } from "./camera";
 import { RehearsalScript } from "./RehearsalScript";
+import { ThemeToggle } from "./ThemeToggle";
 import { analyzeRehearsal, composeBreathMarkers } from "../shared/rehearsal";
 import {
   advancePauseHold,
@@ -797,6 +798,7 @@ export default function App() {
           </button>
         </nav>
         <div className="header-actions">
+          <ThemeToggle />
           <button
             className={`camera-status ${connected ? "on" : ""}`}
             onClick={() =>

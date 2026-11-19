@@ -17,6 +17,7 @@ The public studio offers clearly labeled simulation. For live signals, use a Pre
 ## What works
 
 - Paste or import a text script, choose a starting pace, adjust the text size, mirror it, and enter a focused reading view. A dark stage with bright script text and a centered highlight band keeps the reading line clear as the script scrolls.
+- Choose a dark or light workspace with the sun/moon button in the header. Dark is the default, and your choice stays on this browser between visits.
 - Use the **Enable Camera & Biometric Pacing** switch, which starts off and opens the consent step. After accepting phone-camera processing, establish a quiet baseline over at least 35 seconds with stable pulse and breathing estimates. Switching off stops capture; during a rehearsal, it ends the take and opens the review.
 - A reliable pulse estimate **more than 10% above your baseline** eases the selected scroll rate down by **20–30%** and gently pulses a **“Take a breath”** cue above the reading band. The scroll smoothly returns toward the selected pace as the pulse settles. The cue stays still when reduced motion is preferred.
 - Reliable breathing **more than 25% above the quiet baseline** can offer the same 20–30% slowdown after a full 30-second quiet window.
