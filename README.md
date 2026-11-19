@@ -23,7 +23,7 @@ The public studio offers clearly labeled simulation. For live signals, use a Pre
 - Review the rehearsal, inspect detected pauses, and download a script with suggested and observed `[ BREATHE ]` markers. Exporting rehearsal data is a separate, explicit action.
 - Test behavior with simulated BPM **60–140**, breathing rate **8–28**, and speaking/pause controls. Simulation is labeled everywhere and never opens the camera.
 
-**Breathing during speech is a known SDK limitation.** Presage documents that its 30-second breathing rate and breathing waveforms do not work reliably while someone is talking. Cadence uses quiet breathing to establish a baseline and suggest phrase breaks. It does not treat a breathing estimate during speech as evidence of a current breathing change. Pulse estimates also average a 12-second window; this is not instant emotion recognition.
+**Breathing during speech is a known SDK limitation.** Presage documents that its 30-second breathing rate and breathing waveforms do not work reliably while someone is talking, and breathing confidence remains zero until the full 30-second window is available. A 10-second calibration cannot establish both rates. Cadence uses at least 35 seconds of quiet capture to establish a baseline and suggest phrase breaks. It does not treat a breathing estimate during speech as evidence of a current breathing change. Pulse estimates also average a 12-second window; this is not instant emotion recognition.
 
 ## Run locally
 

@@ -932,7 +932,9 @@ export default function App() {
                       : signal.validation
                         ? signal.hint ||
                           "Keep your face and upper chest visible in good light."
-                        : "Rest your phone on a stand. Keep your face and upper chest in view for about 35 seconds."}
+                        : signal.talking === true
+                          ? "Pause speaking so we can collect your quiet baseline."
+                          : "Rest your phone on a stand. Keep your face and upper chest in view and stay quiet for at least 35 seconds."}
                   </p>
                   {phase === "calibrating" && (
                     <>
@@ -945,8 +947,12 @@ export default function App() {
                       </div>
                       <small>
                         {calibrationSeconds < 35
-                          ? `${Math.floor(calibrationSeconds)} / 35 seconds of stillness`
+                          ? `${Math.floor(calibrationSeconds)} / 35 seconds of quiet calibration`
                           : "Waiting for reliable readings…"}
+                      </small>
+                      <small>
+                        Pulse averages 12 seconds. Breathing needs a full
+                        30-second quiet window.
                       </small>
                       {calibrationSeconds >= 35 &&
                         calibration.current.pulse.length >= 3 && (

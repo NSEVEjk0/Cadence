@@ -1134,15 +1134,15 @@ footer .text-button {
   margin: 4px 0 6px;
 }
 .calibration-card p {
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.7;
-  color: #8b977b;
+  color: #65785c;
   margin: 0;
   max-width: 335px;
 }
 .calibration-card small {
-  font-size: 8px;
-  color: #91a07f;
+  font-size: 10px;
+  color: #52694b;
   display: block;
   margin-top: 6px;
 }
@@ -2169,7 +2169,7 @@ dialog::backdrop {
     font-size: 11px;
   }
   .calibration-card p {
-    font-size: 8px;
+    font-size: 10px;
     line-height: 1.65;
   }
   .calibration-card .eyebrow {

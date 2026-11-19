@@ -106,7 +106,26 @@ test("private room calibrates through mocked live transport and the pacing switc
     page.getByRole("heading", { name: "Sit still. Breathe normally." }),
   ).toBeVisible();
   await expect.poll(() => packets).toBeGreaterThan(4);
-  await page.clock.fastForward(36_000);
+  speaking = true;
+  await expect(
+    page.getByText("Pause speaking so we can collect your quiet baseline."),
+  ).toBeVisible();
+  await page.clock.fastForward(10_000);
+  await expect(
+    page.getByRole("button", { name: "Start rehearsal" }),
+  ).toBeDisabled();
+  speaking = false;
+  await expect(
+    page.getByText(/stay quiet for at least 35 seconds/u),
+  ).toBeVisible();
+  await page.clock.fastForward(10_000);
+  await expect(
+    page.getByRole("button", { name: "Start rehearsal" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByText(/Breathing needs a full 30-second quiet window/u),
+  ).toBeVisible();
+  await page.clock.fastForward(26_000);
   await expect(
     page.getByRole("heading", { name: "You’re ready to begin." }),
   ).toBeVisible();
