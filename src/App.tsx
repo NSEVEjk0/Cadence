@@ -30,9 +30,11 @@ import {
 } from "./components";
 import { CameraConnection } from "./camera";
 import {
+  advancePauseHold,
   clamp,
   decidePace,
   DEMO_SCRIPT,
+  emptyPauseHold,
   markedScript,
   median,
   PAUSE_HOLD_MS,
@@ -129,6 +131,7 @@ export default function App() {
   const activeWordRef = useRef(0);
   const [pace, setPace] = useState(baseWpm);
   const paceRef = useRef(baseWpm);
+  const scrollRemainder = useRef(0);
   const [progress, setProgress] = useState(0);
   const [history, setHistory] = useState<SessionPoint[]>([]);
   const historyRef = useRef<SessionPoint[]>([]);
@@ -138,6 +141,7 @@ export default function App() {
   const sessionStart = useRef(0);
   const silentSince = useRef<number | null>(null);
   const hasSpoken = useRef(false);
+  const pauseHold = useRef(emptyPauseHold());
   const camera = useRef<CameraConnection | null>(null);
   const cameraPreview = useRef<HTMLVideoElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
@@ -176,6 +180,7 @@ export default function App() {
     now: Date.now(),
     silentSince: silentSince.current,
     hasSpoken: hasSpoken.current,
+    pauseHoldUntil: pauseHold.current.until,
   });
   const running = phase === "rehearsing" || phase === "paused";
   const cameraEnabled =
@@ -290,6 +295,7 @@ export default function App() {
     if (phase !== "rehearsing") return;
     if (!trustedTalking(signal, now) || signal.validation !== 0) {
       silentSince.current = null;
+      pauseHold.current = emptyPauseHold();
       return;
     }
     if (signal.talking) {
@@ -314,6 +320,7 @@ export default function App() {
   const stopCamera = useCallback(() => {
     camera.current?.stop();
     camera.current = null;
+    pauseHold.current = emptyPauseHold();
     setConnected(false);
     setStream(null);
     setApiKey("");
@@ -325,6 +332,7 @@ export default function App() {
     if (!["rehearsing", "paused"].includes(phaseRef.current)) return;
     const at = Date.now();
     if (
+      hasSpoken.current &&
       silentSince.current !== null &&
       at - silentSince.current >= PAUSE_HOLD_MS
     ) {
@@ -381,6 +389,12 @@ export default function App() {
       const dt = Math.min((timestamp - previous) / 1000, 0.1);
       previous = timestamp;
       const at = Date.now();
+      pauseHold.current = advancePauseHold(pauseHold.current, {
+        signal: signalRef.current,
+        now: at,
+        silentSince: silentSince.current,
+        hasSpoken: hasSpoken.current,
+      });
       const next = decidePace({
         baseWpm,
         baseline: baselineRef.current,
@@ -388,13 +402,21 @@ export default function App() {
         now: at,
         silentSince: silentSince.current,
         hasSpoken: hasSpoken.current,
+        pauseHoldUntil: pauseHold.current.until,
       });
       paceRef.current = smoothPace(paceRef.current, next.target, dt);
       const node = viewport.current;
       if (node && content.current && words.length) {
         const maxScroll = Math.max(1, node.scrollHeight - node.clientHeight);
-        node.scrollTop +=
-          (((maxScroll / words.length) * paceRef.current) / 60) * dt;
+        if (paceRef.current > 0) {
+          const before = node.scrollTop;
+          const movement =
+            (((maxScroll / words.length) * paceRef.current) / 60) * dt +
+            scrollRemainder.current;
+          node.scrollTop += movement;
+          // Retain movement lost when the browser rounds scrollTop to pixels.
+          scrollRemainder.current = movement - (node.scrollTop - before);
+        }
         if (timestamp - lastUi > 180) {
           const readingLine =
             node.getBoundingClientRect().top + node.clientHeight * 0.5;
@@ -474,12 +496,14 @@ export default function App() {
     setFinalDuration(0);
     silentSince.current = null;
     hasSpoken.current = false;
+    pauseHold.current = emptyPauseHold();
     activeWordRef.current = 0;
     setActiveWord(0);
     setProgress(0);
     if (viewport.current) viewport.current.scrollTop = 0;
     paceRef.current = baseWpm;
     setPace(baseWpm);
+    scrollRemainder.current = 0;
     setSimulationOpen(false);
     updatePhase("rehearsing");
   };
@@ -557,6 +581,7 @@ export default function App() {
         setStatus("Camera off");
         silentSince.current = null;
         hasSpoken.current = false;
+        pauseHold.current = emptyPauseHold();
       },
     });
     camera.current = connection;
@@ -1422,8 +1447,9 @@ export default function App() {
               Breathing is calibrated while you are quiet. During speech, the
               prompter uses reliable pulse and speaking-pause signals. A pulse
               rise over 10% gently slows the scroll by 20–30% and adds a “Take a
-              breath” cue. A higher pulse is not a diagnosis of nerves or
-              stress.
+              breath” cue. Speaking pauses get at least 1.5 seconds of held
+              text, and longer quiet pauses stay held until you continue. A
+              higher pulse is not a diagnosis of nerves or stress.
             </p>
           </div>
           <details className="developer-settings">

@@ -11,6 +11,7 @@ export const BREATHING_FRESH_MS = 4_000;
 export const TALKING_FRESH_MS = 1_200;
 export const BREATHING_QUIET_WINDOW_MS = 30_000;
 export const PAUSE_HOLD_MS = 600;
+export const PAUSE_MIN_HOLD_MS = 1_500;
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -62,6 +63,44 @@ export function trustedTalking(signal: SignalSnapshot, now: number): boolean {
   );
 }
 
+export interface PauseHoldState {
+  quietStart: number | null;
+  until: number | null;
+}
+
+export const emptyPauseHold = (): PauseHoldState => ({
+  quietStart: null,
+  until: null,
+});
+
+export function advancePauseHold(
+  current: PauseHoldState,
+  {
+    signal,
+    now,
+    silentSince,
+    hasSpoken,
+  }: {
+    signal: SignalSnapshot;
+    now: number;
+    silentSince: number | null;
+    hasSpoken: boolean;
+  },
+): PauseHoldState {
+  if (!hasSpoken || signal.validation !== 0 || !trustedTalking(signal, now))
+    return emptyPauseHold();
+  if (
+    signal.talking === false &&
+    silentSince !== null &&
+    now - silentSince >= PAUSE_HOLD_MS &&
+    current.quietStart !== silentSince
+  ) {
+    // Arm once per confirmed pause, rather than extending the timer every frame.
+    return { quietStart: silentSince, until: now + PAUSE_MIN_HOLD_MS };
+  }
+  return current;
+}
+
 export interface PaceDecision {
   target: number;
   multiplier: number;
@@ -77,6 +116,7 @@ export function decidePace({
   now,
   silentSince,
   hasSpoken,
+  pauseHoldUntil = null,
 }: {
   baseWpm: number;
   baseline: Baseline | null;
@@ -84,6 +124,7 @@ export function decidePace({
   now: number;
   silentSince: number | null;
   hasSpoken: boolean;
+  pauseHoldUntil?: number | null;
 }): PaceDecision {
   const base = clamp(baseWpm, 60, 220);
   const plain = (
@@ -108,16 +149,20 @@ export function decidePace({
   if (
     hasSpoken &&
     talkingIsTrusted &&
-    signal.talking === false &&
-    silentSince !== null &&
-    now - silentSince >= PAUSE_HOLD_MS
+    ((signal.talking === false &&
+      silentSince !== null &&
+      now - silentSince >= PAUSE_HOLD_MS) ||
+      (pauseHoldUntil !== null && now < pauseHoldUntil))
   ) {
     return {
       target: 0,
       multiplier: 0,
       held: true,
       reason: "pause",
-      message: "Take your time. Your place is held.",
+      message:
+        signal.talking === false
+          ? "Take your time. Your place is held."
+          : "A moment to breathe. Resuming shortly.",
     };
   }
   let pulseReduction = 0;
@@ -179,10 +224,9 @@ export function smoothPace(
   deltaSeconds: number,
 ): number {
   if (target === 0) return 0;
-  const initial = current === 0 ? target : current;
   return (
-    initial +
-    (target - initial) * (1 - Math.exp(-clamp(deltaSeconds, 0, 0.5) / 1.8))
+    current +
+    (target - current) * (1 - Math.exp(-clamp(deltaSeconds, 0, 0.5) / 1.8))
   );
 }
 

@@ -88,13 +88,15 @@ test("simulation adapts scrolling, holds an observed pause, and exports a marked
   await page.getByRole("button", { name: "Baseline", exact: true }).click();
   await expect(page.getByTestId("breath-cue")).toHaveCount(0);
   await expect
-    .poll(async () =>
-      Number(
-        (await page.getByTestId("pace-value").textContent())?.replace(
-          /\D/gu,
-          "",
+    .poll(
+      async () =>
+        Number(
+          (await page.getByTestId("pace-value").textContent())?.replace(
+            /\D/gu,
+            "",
+          ),
         ),
-      ),
+      { timeout: 8000 },
     )
     .toBeGreaterThan(120);
   await page.getByRole("button", { name: "Hide simulation controls" }).click();
@@ -157,6 +159,83 @@ test("faster quiet breathing waits for a full window and respects reduced motion
   await expect(page.getByTestId("breath-cue")).toHaveCount(0);
   await page.getByRole("button", { name: "Hide simulation controls" }).click();
   await page.getByRole("button", { name: "Finish", exact: true }).click();
+});
+
+test("speaking pauses get a minimum hold, resume moving, and preserve observed durations", async ({
+  page,
+}) => {
+  const clockStart = new Date("2026-11-19T14:00:00Z");
+  await page.clock.install({ time: clockStart });
+  await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Connect camera" }).click();
+  await page.getByRole("button", { name: "Try a simulation" }).click();
+  await page.getByRole("checkbox", { name: "Simulate speaking" }).uncheck();
+  await page.getByRole("button", { name: "Start rehearsal" }).click();
+  await page.clock.runFor(2000);
+  await expect(page.getByTestId("pace-value")).not.toHaveText("Held");
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await expect(
+    page
+      .getByText("Observed pauses", { exact: true })
+      .locator("..")
+      .locator("strong"),
+  ).toHaveText("0");
+
+  await page.getByRole("button", { name: "Rehearse again" }).click();
+  await page.getByRole("button", { name: "Connect camera" }).click();
+  await page.getByRole("button", { name: "Try a simulation" }).click();
+  await page.getByRole("button", { name: "Start rehearsal" }).click();
+  await page.clock.runFor(500);
+  const stage = page.getByLabel("Teleprompter script");
+  expect(await stage.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Controls", exact: true }).click();
+  const speaking = page.getByRole("checkbox", { name: "Simulate speaking" });
+  await speaking.uncheck();
+  await page.clock.runFor(700);
+  await expect(page.getByTestId("pace-value")).toHaveText("Held");
+  const stoppedAt = await stage.evaluate((node) => node.scrollTop);
+  await speaking.check();
+  await page.clock.runFor(1000);
+  await expect(page.getByTestId("pace-value")).toHaveText("Held");
+  expect(await stage.evaluate((node) => node.scrollTop)).toBe(stoppedAt);
+  await page.clock.runFor(1000);
+  await expect(page.getByTestId("pace-value")).not.toHaveText("Held");
+  expect(await stage.evaluate((node) => node.scrollTop)).toBeGreaterThan(
+    stoppedAt,
+  );
+  const resumedPace = Number(
+    (await page.getByTestId("pace-value").textContent())?.replace(/\D/gu, ""),
+  );
+  expect(resumedPace).toBeGreaterThan(0);
+  expect(resumedPace).toBeLessThan(130);
+
+  await speaking.uncheck();
+  await page.clock.runFor(2600);
+  await expect(page.getByTestId("pace-value")).toHaveText("Held");
+  await speaking.check();
+  await page.clock.runFor(600);
+  await expect(page.getByTestId("pace-value")).not.toHaveText("Held");
+  await page.getByRole("button", { name: "Hide simulation controls" }).click();
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await expect(
+    page
+      .getByText("Observed pauses", { exact: true })
+      .locator("..")
+      .locator("strong"),
+  ).toHaveText("2");
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export rehearsal data" }).click();
+  const stream = await (await downloading).createReadStream();
+  expect(stream).not.toBeNull();
+  let exported = "";
+  for await (const chunk of stream!) exported += chunk.toString();
+  const data = JSON.parse(exported);
+  expect(data.source).toBe("simulation");
+  expect(data.pauses).toHaveLength(2);
+  expect(data.pauses[0].duration).toBeGreaterThanOrEqual(600);
+  expect(data.pauses[0].duration).toBeLessThan(1500);
+  expect(data.pauses[1].duration).toBeGreaterThanOrEqual(2500);
 });
 
 test("camera is not requested before consent, settings are usable, and script markup is inert", async ({

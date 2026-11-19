@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  advancePauseHold,
   decidePace,
+  emptyPauseHold,
   markedScript,
   planBreathMarkers,
   scriptWords,
@@ -197,6 +199,116 @@ describe("adaptive pace", () => {
     expect(validPulse(reading(140), now)).toBe(false);
     expect(validBreathing(reading(14, { confidence: 44 }), now)).toBe(false);
     expect(validBreathing(reading(14, { confidence: 45 }), now)).toBe(true);
+  });
+});
+
+describe("timed speaking pauses", () => {
+  const quiet = () => ({ ...signal(), talking: false });
+
+  it("arms a 1.5-second hold once a speaking pause is confirmed", () => {
+    const options = {
+      signal: quiet(),
+      now,
+      hasSpoken: true,
+      silentSince: now - 599,
+    };
+    expect(advancePauseHold(emptyPauseHold(), options).until).toBeNull();
+    const held = advancePauseHold(emptyPauseHold(), {
+      ...options,
+      silentSince: now - 600,
+    });
+    expect(held.until).toBe(now + 1500);
+    expect(
+      advancePauseHold(emptyPauseHold(), {
+        ...options,
+        silentSince: now - 1000,
+        hasSpoken: false,
+      }).until,
+    ).toBeNull();
+  });
+
+  it("keeps the full hold after early speech returns, then eases scrolling back in", () => {
+    const held = advancePauseHold(emptyPauseHold(), {
+      signal: quiet(),
+      now,
+      silentSince: now - 700,
+      hasSpoken: true,
+    });
+    const speaking = { ...signal(), talkingReceivedAt: now + 1000 };
+    expect(
+      advancePauseHold(held, {
+        signal: speaking,
+        now: now + 1000,
+        silentSince: null,
+        hasSpoken: true,
+      }).until,
+    ).toBe(now + 1500);
+    expect(
+      decide({
+        signal: speaking,
+        now: now + 1499,
+        pauseHoldUntil: held.until,
+      }).held,
+    ).toBe(true);
+    const resumed = decide({
+      signal: speaking,
+      now: now + 1500,
+      pauseHoldUntil: held.until,
+    });
+    expect(resumed.held).toBe(false);
+    expect(smoothPace(0, resumed.target, 0.1)).toBeGreaterThan(0);
+    expect(smoothPace(0, resumed.target, 0.1)).toBeLessThan(resumed.target);
+  });
+
+  it("does not renew the minimum timer during a longer quiet pause", () => {
+    const options = {
+      signal: quiet(),
+      now,
+      silentSince: now - 700,
+      hasSpoken: true,
+    };
+    const held = advancePauseHold(emptyPauseHold(), options);
+    const later = {
+      ...options,
+      now: now + 3000,
+      signal: { ...quiet(), talkingReceivedAt: now + 3000 },
+    };
+    expect(advancePauseHold(held, later).until).toBe(now + 1500);
+    expect(decide({ ...later, pauseHoldUntil: held.until }).held).toBe(true);
+    expect(
+      decide({
+        now: now + 3000,
+        signal: { ...signal(), talkingReceivedAt: now + 3000 },
+        pauseHoldUntil: held.until,
+      }).held,
+    ).toBe(false);
+    expect(
+      advancePauseHold(held, {
+        ...later,
+        silentSince: now + 2300,
+      }).until,
+    ).toBe(now + 4500);
+  });
+
+  it("cancels a timed hold when framing or speaking detection is unreliable", () => {
+    const held = { quietStart: now - 700, until: now + 1500 };
+    for (const unreliable of [
+      { ...quiet(), validation: 12 },
+      { ...quiet(), talkingStable: false },
+      { ...quiet(), talkingReceivedAt: now - 1201 },
+    ]) {
+      expect(
+        advancePauseHold(held, {
+          signal: unreliable,
+          now,
+          silentSince: now - 700,
+          hasSpoken: true,
+        }).until,
+      ).toBeNull();
+      expect(
+        decide({ signal: unreliable, pauseHoldUntil: held.until }).held,
+      ).toBe(false);
+    }
   });
 });
 

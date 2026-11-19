@@ -21,7 +21,7 @@ Keep the phone on a stand with a well-lit face and upper chest visible. Because 
 | 2:00–2:20        | If a reliable pulse change occurs naturally, show the pace response; otherwise explain the rule separately using a clearly labeled simulation | A truthful demonstration without inventing physiology or promising a pulse change on command |
 | 2:20–2:50        | Finish, confirm the camera turns off, show the marked script, and save it                                                                     | Useful rehearsal output and a clear end to capture                                           |
 
-Breathing is a 30-second estimate and unreliable during speech. Do not describe a rising breathing value while talking as valid proof of instantaneous nervousness. Pulse also has a 12-second averaging window. A brief pause need not immediately change those rates; the speaking detector is the correct live signal to demonstrate a prompt pause hold.
+Breathing is a 30-second estimate and unreliable during speech. Do not describe a rising breathing value while talking as valid proof of instantaneous nervousness or a specific exhale. Pulse also has a 12-second averaging window. The speaking detector is the live signal used for a pause hold: after 600 ms of stable quiet, the line stays still for at least 1.5 seconds. It waits longer if you remain quiet and eases back in when you continue. Rehearsal markers use the observed speaking pause; the minimum hold does not add artificial time to that pause.
 
 ## Before publishing the recording
 

@@ -19,12 +19,13 @@ The public studio offers clearly labeled simulation. For live signals, use a Pre
 - Paste or import a text script, choose a starting pace, adjust the text size, mirror it, and enter a focused reading view. A dark stage with bright script text and a centered highlight band keeps the reading line clear as the script scrolls.
 - Use the **Enable Camera & Biometric Pacing** switch, which starts off and opens the consent step. After accepting phone-camera processing, establish a quiet baseline over at least 35 seconds with stable pulse and breathing estimates. Switching off stops capture; during a rehearsal, it ends the take and opens the review.
 - A reliable pulse estimate **more than 10% above your baseline** eases the selected scroll rate down by **20–30%** and gently pulses a **“Take a breath”** cue above the reading band. The scroll smoothly returns toward the selected pace as the pulse settles. The cue stays still when reduced motion is preferred.
-- Reliable breathing **more than 25% above the quiet baseline** can offer the same 20–30% slowdown after a full 30-second quiet window. Stable Presage talking detection holds your place during a speaking pause; that hold takes priority over slowing down.
+- Reliable breathing **more than 25% above the quiet baseline** can offer the same 20–30% slowdown after a full 30-second quiet window.
+- After **600 ms of stable detected quiet following speech**, hold your place for **at least 1.5 seconds**, even if you resume speaking sooner. Longer quiet pauses stay held until speech returns, then scrolling eases back in. Pause holds take priority over slowing down; unreliable signals cancel an automatic hold.
 - View SDK-reported BPM, breathing rate, confidence, speaking status, and camera throughput in a collapsible telemetry panel.
 - Review the rehearsal, inspect detected pauses, and download a script with suggested and observed `[ BREATHE ]` markers. Exporting rehearsal data is a separate, explicit action.
 - Test behavior with simulated BPM **60–140**, breathing rate **8–28**, and speaking/pause controls. Simulation is labeled everywhere and never opens the camera.
 
-**Breathing during speech is a known SDK limitation.** Presage documents that its 30-second breathing rate and breathing waveforms do not work reliably while someone is talking, and breathing confidence remains zero until the full 30-second window is available. A 10-second calibration cannot establish both rates. Cadence uses at least 35 seconds of quiet capture to establish a baseline and suggest phrase breaks. It does not treat a breathing estimate during speech as evidence of a current breathing change. Breathing rate does not measure breath depth; Cadence does not label shallow breathing. Pulse estimates also average a 12-second window; this is not instant emotion recognition.
+**Breathing during speech is a known SDK limitation.** Presage documents that its 30-second breathing rate and breathing waveforms do not work reliably while someone is talking, and breathing confidence remains zero until the full 30-second window is available. A 10-second calibration cannot establish both rates. Cadence uses at least 35 seconds of quiet capture to establish a baseline and suggest phrase breaks. It does not treat a breathing estimate during speech as evidence of a current breathing change. Breathing rate does not measure breath depth or identify an individual intentional exhale; Cadence uses the speaking detector for pause holds and does not label shallow breathing. Pulse estimates also average a 12-second window; this is not instant emotion recognition.
 
 ## Run locally
 
@@ -112,7 +113,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Unit checks cover pulse and quiet-breathing thresholds, bounded slowdowns and smooth recovery, confidence and freshness, supported pulse ranges, source separation, speaking holds, breathing exclusions during speech, marker preservation, private-room authorization, and frame validation. Browser checks cover desktop and phone layouts, reading-band cues and reduced motion, consent gating, simulation adaptation, pause holds, exports, and inert script markup.
+Unit checks cover pulse and quiet-breathing thresholds, bounded slowdowns and smooth recovery, confidence and freshness, supported pulse ranges, source separation, timed speaking holds, breathing exclusions during speech, marker preservation, private-room authorization, and frame validation. Browser checks cover desktop and phone layouts, reading-band cues and reduced motion, consent gating, simulation adaptation, the 1.5-second minimum hold, longer pauses, exports, and inert script markup.
 
 A separate browser test uses mocked transport and a virtual camera to verify private-link consent, quiet calibration, pulse-based pacing, and camera-track shutdown. Those fixtures are not real physiological readings and are never shipped in the app.
 
