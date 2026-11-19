@@ -268,6 +268,7 @@ export function ScriptView({
   activeWord,
   fontSize,
   mirror,
+  breathCue,
   viewportRef,
   contentRef,
 }: {
@@ -276,6 +277,7 @@ export function ScriptView({
   activeWord: number;
   fontSize: number;
   mirror: boolean;
+  breathCue: boolean;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   contentRef: React.RefObject<HTMLDivElement | null>;
 }) {
@@ -303,9 +305,24 @@ export function ScriptView({
         } as React.CSSProperties
       }
     >
-      <div className="reading-guide" aria-hidden="true">
+      <div
+        className={`reading-guide ${breathCue ? "breath-cue-active" : ""}`}
+        aria-hidden="true"
+      >
         <span />
         <span />
+      </div>
+      <div
+        className="reading-cue"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {breathCue && (
+          <span className="reading-breath-cue" data-testid="breath-cue">
+            <Wind size={13} aria-hidden="true" /> Take a breath
+          </span>
+        )}
       </div>
       <div className="prompter-copy" ref={contentRef} style={{ fontSize }}>
         {words.length ? (

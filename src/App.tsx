@@ -287,14 +287,14 @@ export default function App() {
   }, [phase, source, signal, now, wantPulse, updateBaseline, updatePhase]);
 
   useEffect(() => {
-    if (
-      phase !== "rehearsing" ||
-      !trustedTalking(signal, now) ||
-      signal.validation !== 0
-    )
+    if (phase !== "rehearsing") return;
+    if (!trustedTalking(signal, now) || signal.validation !== 0) {
+      silentSince.current = null;
       return;
+    }
     if (signal.talking) {
       if (
+        hasSpoken.current &&
         silentSince.current !== null &&
         now - silentSince.current >= PAUSE_HOLD_MS
       ) {
@@ -308,8 +308,7 @@ export default function App() {
       }
       silentSince.current = null;
       hasSpoken.current = true;
-    } else if (hasSpoken.current && silentSince.current === null)
-      silentSince.current = now;
+    } else if (silentSince.current === null) silentSince.current = now;
   }, [signal, now, phase]);
 
   const stopCamera = useCallback(() => {
@@ -993,6 +992,10 @@ export default function App() {
               activeWord={activeWord}
               fontSize={fontSize}
               mirror={mirror}
+              breathCue={
+                phase === "rehearsing" &&
+                (decision.reason === "pulse" || decision.reason === "breathing")
+              }
               viewportRef={viewport}
               contentRef={content}
             />
@@ -1417,8 +1420,10 @@ export default function App() {
             <Wind size={18} />
             <p>
               Breathing is calibrated while you are quiet. During speech, the
-              prompter uses reliable pulse and speaking-pause signals. A higher
-              pulse is not a diagnosis of nerves or stress.
+              prompter uses reliable pulse and speaking-pause signals. A pulse
+              rise over 10% gently slows the scroll by 20–30% and adds a “Take a
+              breath” cue. A higher pulse is not a diagnosis of nerves or
+              stress.
             </p>
           </div>
           <details className="developer-settings">

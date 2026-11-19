@@ -147,6 +147,7 @@ test("private room calibrates through mocked live transport and the pacing switc
       ),
     )
     .toBeLessThan(120);
+  await expect(page.getByTestId("breath-cue")).toBeVisible();
   await page.getByRole("button", { name: "Open focus view" }).click();
   await page
     .getByRole("switch", { name: "Enable Camera & Biometric Pacing" })

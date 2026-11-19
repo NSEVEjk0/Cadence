@@ -127,13 +127,14 @@ export function decidePace({
     now,
     signal.source === "simulation",
   );
-  if (baseline.pulse && pulseUsable) {
-    // A small deadband prevents normal variation from constantly changing the scroll.
-    pulseReduction = clamp(
-      ((signal.pulse!.value - baseline.pulse - 5) / baseline.pulse) * 1.6,
-      0,
-      0.32,
-    );
+  if (
+    baseline.pulse &&
+    pulseUsable &&
+    signal.pulse!.value > baseline.pulse * 1.1
+  ) {
+    // Cross a relative 10% threshold, then ease toward a 20–30% reduction.
+    const rise = (signal.pulse!.value - baseline.pulse) / baseline.pulse;
+    pulseReduction = clamp(0.2 + (rise - 0.1) * 0.5, 0.2, 0.3);
   }
   // A rate is a 30-second estimate. It cannot describe breathing during speech.
   const breathingUsable =
@@ -142,20 +143,21 @@ export function decidePace({
     signal.talking === false &&
     silentSince !== null &&
     now - silentSince >= BREATHING_QUIET_WINDOW_MS;
-  if (baseline.breathing && breathingUsable) {
-    breathingReduction = clamp(
-      ((signal.breathing!.value - baseline.breathing - 2) /
-        baseline.breathing) *
-        0.5,
-      0,
-      0.25,
-    );
+  if (
+    baseline.breathing &&
+    breathingUsable &&
+    signal.breathing!.value > baseline.breathing * 1.25
+  ) {
+    // Faster quiet breathing is a rate change, not a measure of breath depth.
+    const rise =
+      (signal.breathing!.value - baseline.breathing) / baseline.breathing;
+    breathingReduction = clamp(0.2 + (rise - 0.25) * 0.2, 0.2, 0.3);
   }
   const reduction = Math.max(pulseReduction, breathingReduction);
-  if (reduction > 0.025) {
+  if (reduction > 0) {
     const reason = pulseReduction >= breathingReduction ? "pulse" : "breathing";
     return {
-      target: Math.max(60, base * (1 - reduction)),
+      target: base * (1 - reduction),
       multiplier: 1 - reduction,
       held: false,
       reason,

@@ -563,6 +563,56 @@ h1 em {
   border-bottom: 4px solid transparent;
   border-right: 6px solid #d4e6b9;
 }
+.reading-guide.breath-cue-active::before {
+  animation: reading-band-breathe 3.6s ease-in-out infinite;
+}
+.reading-cue {
+  position: sticky;
+  top: 50%;
+  height: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.reading-breath-cue {
+  position: absolute;
+  right: 25px;
+  bottom: calc(var(--reading-line-height, 55px) / 2 + 8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid #829b72;
+  border-radius: 6px;
+  background: #1c3f2f;
+  color: #e6efce;
+  font-family: "DM Sans", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  animation: breath-cue-breathe 3.6s ease-in-out infinite;
+}
+@keyframes reading-band-breathe {
+  0%,
+  100% {
+    background: #254b38;
+    border-color: #527252;
+  }
+  50% {
+    background: #2d533c;
+    border-color: #789269;
+  }
+}
+@keyframes breath-cue-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(181 208 151 / 0%);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgb(181 208 151 / 14%);
+  }
+}
 .breath-chip {
   font-family: "DM Sans", Arial, sans-serif;
   display: inline-flex;
@@ -2097,6 +2147,10 @@ dialog::backdrop {
   .reading-guide {
     padding: 0 13px;
   }
+  .reading-breath-cue {
+    right: 13px;
+    font-size: 11px;
+  }
   .breath-chip {
     font-size: 8px;
     padding: 3px 5px;
@@ -2410,7 +2464,9 @@ dialog::backdrop {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
