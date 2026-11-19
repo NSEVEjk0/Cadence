@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("private room calibrates through mocked live transport and stops camera tracks on finish", async ({
+test("private room calibrates through mocked live transport and the pacing switch stops capture", async ({
   page,
 }) => {
   // Invented transport fixtures are confined to this test; no Presage service
@@ -110,6 +110,9 @@ test("private room calibrates through mocked live transport and stops camera tra
   await expect(
     page.getByRole("heading", { name: "You’re ready to begin." }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("switch", { name: "Enable Camera & Biometric Pacing" }),
+  ).toBeChecked();
   expect(receivedConfiguration).toBe(true);
   await page.getByRole("button", { name: "Start rehearsal" }).click();
   speaking = true;
@@ -125,7 +128,10 @@ test("private room calibrates through mocked live transport and stops camera tra
       ),
     )
     .toBeLessThan(120);
-  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page.getByRole("button", { name: "Open focus view" }).click();
+  await page
+    .getByRole("switch", { name: "Enable Camera & Biometric Pacing" })
+    .click();
   await expect(
     page.getByText("PRESAGE REHEARSAL", { exact: true }),
   ).toBeVisible();
@@ -137,5 +143,101 @@ test("private room calibrates through mocked live transport and stops camera tra
     ),
   ).toBe("ended");
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  await page.getByRole("button", { name: "Rehearse again" }).click();
+  await expect(
+    page.getByRole("switch", { name: "Enable Camera & Biometric Pacing" }),
+  ).not.toBeChecked();
+  await page
+    .getByRole("switch", { name: "Enable Camera & Biometric Pacing" })
+    .click();
+  await expect(
+    page.getByRole("checkbox", { name: "I agree to this camera processing." }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Consent & connect camera" }),
+  ).toBeDisabled();
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __cameraCalls: number }).__cameraCalls,
+    ),
+  ).toBe(1);
   if (fixtureTimer) clearInterval(fixtureTimer);
+});
+
+test("revoking consent while camera permission is pending stops a late stream", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const state = window as unknown as {
+      __cameraCalls: number;
+      __resolveCamera: () => void;
+      __lateCameraTrack: MediaStreamTrack;
+    };
+    state.__cameraCalls = 0;
+    Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
+      value: () => {
+        state.__cameraCalls++;
+        return new Promise<MediaStream>((resolve) => {
+          state.__resolveCamera = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 640;
+            canvas.height = 480;
+            const stream = canvas.captureStream(30);
+            state.__lateCameraTrack = stream.getVideoTracks()[0];
+            resolve(stream);
+          };
+        });
+      },
+    });
+  });
+  let socketAttempts = 0;
+  await page.routeWebSocket("**/api/camera", (socket) => {
+    socketAttempts++;
+    socket.close();
+  });
+  await page.goto("/");
+  const toggle = page.getByRole("switch", {
+    name: "Enable Camera & Biometric Pacing",
+  });
+  await expect(toggle).not.toBeChecked();
+  await toggle.click();
+  await page.getByLabel("Your Presage API key").fill("fixture-key-not-real");
+  const agreement = page.getByRole("checkbox", {
+    name: "I agree to this camera processing.",
+  });
+  await expect(agreement).not.toBeChecked();
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __cameraCalls: number }).__cameraCalls,
+    ),
+  ).toBe(0);
+  await agreement.check();
+  await page.getByRole("button", { name: "Consent & connect camera" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { __cameraCalls: number }).__cameraCalls,
+      ),
+    )
+    .toBe(1);
+  await agreement.uncheck();
+  await expect(
+    page.getByRole("button", { name: "Consent & connect camera" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Close dialog" }).click();
+  await expect(toggle).not.toBeChecked();
+  await page.evaluate(() =>
+    (window as unknown as { __resolveCamera: () => void }).__resolveCamera(),
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __lateCameraTrack: MediaStreamTrack })
+            .__lateCameraTrack.readyState,
+      ),
+    )
+    .toBe("ended");
+  expect(socketAttempts).toBe(0);
+  await expect(toggle).not.toBeChecked();
 });

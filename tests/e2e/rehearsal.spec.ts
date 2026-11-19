@@ -74,6 +74,9 @@ test("camera is not requested before consent, settings are usable, and script ma
     });
   });
   await page.goto("/");
+  await expect(
+    page.getByRole("switch", { name: "Enable Camera & Biometric Pacing" }),
+  ).not.toBeChecked();
   await page
     .getByLabel("Your script")
     .fill(
@@ -86,7 +89,9 @@ test("camera is not requested before consent, settings are usable, and script ma
   await page.getByLabel("Mirror text for a teleprompter reflector").check();
   await page.getByRole("button", { name: "Close dialog" }).click();
   await expect(page.getByLabel("Teleprompter script")).toHaveClass(/mirrored/u);
-  await page.getByRole("button", { name: "Connect camera" }).click();
+  await page
+    .getByRole("switch", { name: "Enable Camera & Biometric Pacing" })
+    .click();
   await page.getByLabel("Your Presage API key").fill("test-key-not-a-secret");
   expect(
     await page.evaluate(

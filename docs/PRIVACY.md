@@ -4,7 +4,7 @@ Cadence is an opt-in presentation rehearsal tool. It does not diagnose or treat 
 
 ## Before the camera starts
 
-The connection dialog explains camera processing, offers signal choices, and requires an unchecked consent box to be selected. A separate browser/OS permission controls camera access. No camera access is requested on page load or during simulation. No microphone permission is requested.
+**Enable Camera & Biometric Pacing** starts switched off. Enabling it opens the connection dialog, which explains camera processing, offers signal choices, and requires an unchecked consent box to be selected. A separate browser/OS permission controls camera access. No camera access is requested on page load or during simulation. No microphone permission is requested. A new connection requires fresh consent; declining or cancelling a pending connection prevents it from starting even if camera permission arrives later.
 
 ## Where data goes
 
@@ -32,7 +32,7 @@ Cadence creates every measurement SDK with `enableTelemetry: false`. Optional Pr
 
 ## Stopping and deleting
 
-Finishing the rehearsal, disconnecting, closing the page, moving it into the background, or losing the connection stops browser camera tracks and ends the SDK worker. The server also caps camera sessions at 15 minutes. If an error occurs, restarting requires an explicit user action. Closing/reloading clears the page's script and notes. Downloads must be deleted from the user's device separately.
+Switching off **Enable Camera & Biometric Pacing** stops camera tracks and disconnects the SDK session. During a rehearsal, it also ends the take and opens the review. The switch remains available in focus view. Finishing the rehearsal, disconnecting, closing the page, moving it into the background, or losing the connection also stops browser camera tracks and ends the SDK worker. The server caps camera sessions at 15 minutes. If an error occurs, restarting requires an explicit user action. Closing/reloading clears the page's script and notes. Downloads must be deleted from the user's device separately.
 
 ## Demonstrations
 

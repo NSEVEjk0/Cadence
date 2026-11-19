@@ -178,6 +178,8 @@ export default function App() {
     hasSpoken: hasSpoken.current,
   });
   const running = phase === "rehearsing" || phase === "paused";
+  const cameraEnabled =
+    source === "live" && (connected || phase === "connecting");
   const calibrationSeconds =
     phase === "calibrating"
       ? Math.max(0, (now - calibrationStarted.current) / 1000)
@@ -349,6 +351,26 @@ export default function App() {
   const finishRef = useRef(finish);
   finishRef.current = finish;
 
+  const disconnectSignals = () => {
+    if (["rehearsing", "paused"].includes(phaseRef.current)) {
+      finish();
+      return;
+    }
+    stopCamera();
+    updateSignal(emptySignal());
+    updateBaseline(null);
+    setSource(null);
+    silentSince.current = null;
+    hasSpoken.current = false;
+    updatePhase("idle");
+  };
+
+  const openCameraConsent = () => {
+    if (phaseRef.current === "connecting") disconnectSignals();
+    setConsent(false);
+    setDialog("connect");
+  };
+
   useEffect(() => {
     if (phase !== "rehearsing") return;
     let previous = performance.now();
@@ -441,7 +463,7 @@ export default function App() {
       return;
     }
     if (phase === "idle" || phase === "review") {
-      setDialog("connect");
+      openCameraConsent();
       return;
     }
     if (phase !== "ready") return;
@@ -472,6 +494,8 @@ export default function App() {
     setSimPulse(72);
     setSimBreathing(14);
     setSimTalking(true);
+    historyRef.current = [];
+    setHistory([]);
     updateBaseline({ pulse: 72, breathing: 14, source: "simulation" });
     updatePhase("ready");
     setStatus("Simulation ready");
@@ -496,12 +520,15 @@ export default function App() {
       return;
     camera.current?.stop();
     setError("");
+    setView("studio");
     updatePhase("connecting");
     setSource("live");
     updateSignal(emptySignal());
     updateBaseline(null);
     setStatus("Connecting camera");
     setTransport({ frames: 0, fps: 0, width: 0, height: 0 });
+    historyRef.current = [];
+    setHistory([]);
     calibration.current = {
       pulse: [],
       breathing: [],
@@ -509,17 +536,24 @@ export default function App() {
       breathingTs: 0,
     };
     const connection = new CameraConnection({
-      onStream: setStream,
+      onStream: (next) => {
+        if (camera.current === connection) setStream(next);
+      },
       onSignal: (next, stats) => {
+        if (camera.current !== connection) return;
         updateSignal(next);
         setTransport(stats);
       },
-      onStatus: (next) =>
-        setStatus(next === "Running" ? "Quiet calibration" : next),
+      onStatus: (next) => {
+        if (camera.current === connection)
+          setStatus(next === "Running" ? "Quiet calibration" : next);
+      },
       onError: (message) => {
+        if (camera.current !== connection) return;
         setError(message);
         setConnected(false);
         setApiKey("");
+        setConsent(false);
         updatePhase("idle");
         setStatus("Camera off");
         silentSince.current = null;
@@ -547,6 +581,7 @@ export default function App() {
           ?.scrollIntoView({ block: "start", behavior: "smooth" }),
       );
     } catch (error) {
+      if (camera.current !== connection) return;
       setError(
         error instanceof Error
           ? error.message
@@ -556,6 +591,7 @@ export default function App() {
       setStatus("Camera off");
       setConnected(false);
       setApiKey("");
+      setConsent(false);
     }
   };
 
@@ -643,9 +679,7 @@ export default function App() {
           <button
             className={`camera-status ${connected ? "on" : ""}`}
             onClick={() =>
-              connected
-                ? (stopCamera(), updatePhase("idle"))
-                : setDialog("connect")
+              connected ? disconnectSignals() : openCameraConsent()
             }
           >
             {connected ? <Camera size={15} /> : <CameraOff size={15} />}
@@ -966,6 +1000,11 @@ export default function App() {
               decision={decision}
               pace={pace}
               progress={progress}
+              cameraEnabled={cameraEnabled}
+              cameraToggleDisabled={source === "simulation" && running}
+              onCameraToggle={(enabled) =>
+                enabled ? openCameraConsent() : disconnectSignals()
+              }
             />
             <div className="prompter-bottom">
               <span>
@@ -1198,10 +1237,8 @@ export default function App() {
         <Modal
           title="Make room for your rhythm."
           onClose={() => {
-            if (phase === "connecting") {
-              stopCamera();
-              updatePhase("idle");
-            }
+            if (phaseRef.current === "connecting") disconnectSignals();
+            setConsent(false);
             setDialog(null);
           }}
         >
@@ -1296,7 +1333,14 @@ export default function App() {
                 <input
                   type="checkbox"
                   checked={consent}
-                  onChange={(event) => setConsent(event.target.checked)}
+                  onChange={(event) => {
+                    setConsent(event.target.checked);
+                    if (
+                      !event.target.checked &&
+                      phaseRef.current === "connecting"
+                    )
+                      disconnectSignals();
+                  }}
                 />{" "}
                 I agree to this camera processing.
               </label>

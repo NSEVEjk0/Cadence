@@ -17,7 +17,7 @@ The public studio offers clearly labeled simulation. For live signals, use a Pre
 ## What works
 
 - Paste or import a text script, choose a starting pace, adjust the text size, mirror it, and enter a focused reading view. A dark stage with bright script text and a centered highlight band keeps the reading line clear as the script scrolls.
-- Consent to phone-camera processing, then establish a quiet baseline over at least 35 seconds with stable pulse and breathing estimates.
+- Use the **Enable Camera & Biometric Pacing** switch, which starts off and opens the consent step. After accepting phone-camera processing, establish a quiet baseline over at least 35 seconds with stable pulse and breathing estimates. Switching off stops capture; during a rehearsal, it ends the take and opens the review.
 - Adapt the scroll rate to reliable pulse changes relative to that baseline. Pause scrolling when stable Presage talking detection shows a speaking pause.
 - View SDK-reported BPM, breathing rate, confidence, speaking status, and camera throughput in a collapsible telemetry panel.
 - Review the rehearsal, inspect detected pauses, and download a script with suggested and observed `[ BREATHE ]` markers. Exporting rehearsal data is a separate, explicit action.
@@ -44,7 +44,7 @@ For development, run `npm run dev`. Optional bind settings are documented in [.e
 ## Add a Presage key
 
 1. [Register as a Presage developer](https://physiology.presagetech.com/auth/register) and get a SmartSpectra API key. The challenge uses the normal free trial; additional credits are not included.
-2. Open **Connect camera** and paste the key into the password field. Cadence does not put it in local storage, an export, or a browser bundle.
+2. Select **Enable Camera & Biometric Pacing** to open the consent dialog, then paste the key into the password field. Cadence does not put it in local storage, an export, or a browser bundle.
 3. Leave **Include pulse** and **Detect speaking pauses** enabled if your key supports them. If Presage reports a signal authorization error, disable the affected option and reconnect. Pulse is requested individually, without requesting the entire cardio bundle.
 4. Read and accept camera processing, then grant the browser's camera permission. Keep the phone still, with a well-lit face and upper chest visible, for the quiet calibration.
 5. Press play when the baseline is ready. If only reliable pulse is available after the quiet window, **Continue with pulse only** is available; breathing-based markers then use generic phrase spacing instead of a measured breathing baseline.

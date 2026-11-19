@@ -374,6 +374,9 @@ export function PrompterControls({
   decision,
   pace,
   progress,
+  cameraEnabled,
+  cameraToggleDisabled,
+  onCameraToggle,
 }: {
   phase: string;
   onStart: () => void;
@@ -384,6 +387,9 @@ export function PrompterControls({
   decision: PaceDecision;
   pace: number;
   progress: number;
+  cameraEnabled: boolean;
+  cameraToggleDisabled: boolean;
+  onCameraToggle: (enabled: boolean) => void;
 }) {
   const playing = phase === "rehearsing";
   const started = playing || phase === "paused";
@@ -440,6 +446,32 @@ export function PrompterControls({
           : phase === "paused"
             ? "Rehearsal paused. Resume whenever you are ready."
             : "Press play when you’re ready. There’s no rush."}
+      </div>
+      <div className="camera-pacing-control">
+        <label className="camera-pacing-label" htmlFor="enable-camera-pacing">
+          <span>Enable Camera & Biometric Pacing</span>
+          <input
+            id="enable-camera-pacing"
+            className="camera-pacing-switch"
+            type="checkbox"
+            role="switch"
+            checked={cameraEnabled}
+            disabled={cameraToggleDisabled}
+            aria-describedby="camera-pacing-help"
+            onChange={(event) => onCameraToggle(event.target.checked)}
+          />
+        </label>
+        <p id="camera-pacing-help">
+          {cameraToggleDisabled
+            ? "Finish this simulation before enabling the camera."
+            : cameraEnabled
+              ? phase === "connecting"
+                ? "Connecting camera…"
+                : started
+                  ? "On. Switching off ends this take and stops the camera."
+                  : "On. Switch off to stop the camera."
+              : "Off. Enabling opens the consent step."}
+        </p>
       </div>
     </div>
   );
