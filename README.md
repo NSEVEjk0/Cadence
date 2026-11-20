@@ -6,7 +6,7 @@ Cadence is a rehearsal teleprompter for founders, creators, and speakers. It hol
 
 Built for the [Presage SmartSpectra SDK Challenge](https://dev.to/challenges/presage-2026-11-04). The app runs in a phone or desktop browser; a Linux server runs the native SmartSpectra SDK. A PC is not needed to use the hosted app.
 
-[Open the public studio](https://projected-actual-scotia-nominations.trycloudflare.com/) · [Consent and data handling](docs/PRIVACY.md) · [Demo guide](docs/DEMO.md) · [Submission preparation](docs/SUBMISSION.md)
+[Open the public studio](https://walks-proposals-butter-moscow.trycloudflare.com/) · [Consent and data handling](docs/PRIVACY.md) · [Demo guide](docs/DEMO.md) · [Submission preparation](docs/SUBMISSION.md)
 
 ![Cadence studio preview](public/demo/studio.png)
 
@@ -44,6 +44,8 @@ Open `http://127.0.0.1:45300`. This loopback address supports browser camera acc
 `npm ci` installs the SDK's native runtime packages for every supported platform. The download is larger than a typical web app; only the host's runtime is loaded. No C++ build or Electron rebuild is required.
 
 For development, run `npm run dev`. Optional bind settings are documented in [.env.example](.env.example).
+
+For a service with a read-only home directory, use a writable `CADENCE_CACHE_DIR` for temporary SDK session storage. If a configured directory is unavailable, the server tries the operating system's temporary directory and Linux `/tmp`. Each worker uses its own private session directory for both SDK caches and temporary files, with cleanup after exit.
 
 ## Add a Presage key
 
@@ -106,6 +108,8 @@ Each camera session gets a separate child process because the SDK has process-gl
 Temporary SDK-cache isolation currently uses Linux's `XDG_CACHE_HOME`. On macOS and Windows the SDK uses its normal platform cache instead; that cache can persist after the camera session. The native measurement API supports those platforms, but use Linux for this application's documented temporary-cache hosting behavior.
 
 ## Verification
+
+See the [November 20 verification record](docs/VALIDATION.md) for the individual results and the remaining human-camera check.
 
 ```sh
 npm test

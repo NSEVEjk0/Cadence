@@ -18,7 +18,7 @@ Use the notes below to write the submission in your own words. The repository an
 
 - Add a public link to the final 2–3 minute video, with real camera consent and actual live Presage signal footage.
 - Describe any simulation segment explicitly.
-- Public studio: https://projected-actual-scotia-nominations.trycloudflare.com/. This temporary preview supports simulation and the user-key workflow; do not publish the operator's private room link. Public hosting is optional under the challenge rules.
+- Public studio: https://walks-proposals-butter-moscow.trycloudflare.com/. This temporary preview supports simulation and the user-key workflow; do not publish the operator's private room link. Public hosting is optional under the challenge rules.
 - Use the recording sequence in [DEMO.md](DEMO.md).
 
 ## Code

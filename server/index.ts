@@ -1,11 +1,10 @@
 import express from "express";
 import { createServer } from "node:http";
 import { fork, type ChildProcess } from "node:child_process";
-import { existsSync, mkdtempSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { WebSocketServer, WebSocket } from "ws";
 import {
   allowedOrigin,
@@ -16,6 +15,7 @@ import {
   resolveSessionKey,
 } from "./protocol";
 import type { ServerMessage } from "../shared/types";
+import { createSessionCache, SessionCacheError } from "./session-cache";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 if (
@@ -164,7 +164,7 @@ wss.on("connection", (ws: WebSocket) => {
           isDev ? "./worker.ts" : "./worker.mjs",
           import.meta.url,
         );
-        cacheDirectory = mkdtempSync(join(tmpdir(), "cadence-session-"));
+        cacheDirectory = createSessionCache();
         worker = fork(fileURLToPath(workerPath), [], {
           serialization: "advanced",
           stdio: ["ignore", "ignore", "ignore", "ipc"],
@@ -173,6 +173,9 @@ wss.on("connection", (ws: WebSocket) => {
             ...workerEnvironment,
             CADENCE_CAMERA_WORKER: "1",
             XDG_CACHE_HOME: cacheDirectory,
+            TMPDIR: cacheDirectory,
+            TMP: cacheDirectory,
+            TEMP: cacheDirectory,
           },
         });
         workers.add(worker);
@@ -240,6 +243,10 @@ wss.on("connection", (ws: WebSocket) => {
           fail(500, "The camera connection stopped. Please reconnect.", true);
       });
     } catch (error) {
+      if (error instanceof SessionCacheError) {
+        fail(503, error.message, true);
+        return;
+      }
       // Validation errors contain app-owned text only; never echo a key or input.
       fail(
         400,

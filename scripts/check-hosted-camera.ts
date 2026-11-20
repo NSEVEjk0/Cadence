@@ -14,14 +14,14 @@ const origin =
   process.env.CADENCE_TEST_ORIGIN ??
   JSON.parse(await readFile("/root/.config/cadence/deployment.json", "utf8"))
     .publicOrigin;
-const ws = new WebSocket(origin.replace(/^http/u, "ws") + "/api/camera", {
-  headers: { Origin: origin },
-});
 const jpeg = await sharp({
   create: { width: 640, height: 480, channels: 3, background: "#222222" },
 })
   .jpeg()
   .toBuffer();
+const ws = new WebSocket(origin.replace(/^http/u, "ws") + "/api/camera", {
+  headers: { Origin: origin },
+});
 let acknowledged = 0;
 let validation = false;
 let running = false;
