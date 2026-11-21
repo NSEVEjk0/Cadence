@@ -8,6 +8,10 @@ The final challenge video needs actual live Presage signals. A simulation walkth
 
 Open the private hosted link in Safari or Chrome first and wait for the private fragment to disappear from the address bar. Close the initial consent dialog to show the stage with **Enable Camera & Biometric Pacing** switched off. Start the phone's built-in screen recorder while the camera is still off, then enable the switch, accept processing, and grant camera permission. This keeps the private room link out of the recording and establishes consent before capture. There is no need for a PC. Screen recording is a separate, explicit user action and is not started by Cadence.
 
+The camera preview starts hidden. Leave **Show camera preview** unchecked to record the studio and real live readings without displaying your face. The camera still needs a well-lit face and upper chest, and sends camera frames to the VPS for Presage processing. **Show preview** and **Hide preview** change only the display; they do not stop the camera or obscure the SDK's input. Keep **Presage live**, confidence and the pause response visible in the recording.
+
+Stay in Cadence from the scan through **Finish**, then return to other apps. Switching to a chat or another app stops the camera and requires a fresh scan.
+
 Keep the phone on a stand with a well-lit face and upper chest visible. Because the camera must remain still for breathing measurement, avoid recording while holding or moving the phone. Do not strain, hold your breath, or deliberately hyperventilate to manufacture a biometric change.
 
 ## Suggested 2–3 minute sequence
@@ -16,7 +20,7 @@ Keep the phone on a stand with a well-lit face and upper chest visible. Because 
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | 0:00–0:20        | Name, script editor, starting pace and a short description in your own words                                                                  | A concrete rehearsal use case                                                                |
 | 0:20–0:35        | The initially off camera/pacing switch, data disclosure, unchecked consent box, and browser camera permission                                 | Voluntary camera use and truthful remote processing                                          |
-| 0:35–1:15        | Quiet calibration, camera preview, and expanded live telemetry                                                                                | Actual SDK signal acquisition and baseline                                                   |
+| 0:35–1:15        | Quiet calibration, hidden or visible camera preview, and expanded live telemetry                                                              | Actual SDK signal acquisition and baseline                                                   |
 | 1:15–2:00        | Start reading, take a natural speaking pause, then resume                                                                                     | The prompter holds and resumes in response to stable Presage talking detection               |
 | 2:00–2:20        | If a reliable pulse change occurs naturally, show the pace response; otherwise explain the rule separately using a clearly labeled simulation | A truthful demonstration without inventing physiology or promising a pulse change on command |
 | 2:20–2:50        | Finish, confirm the camera turns off, show the marked script, and save it                                                                     | Useful rehearsal output and a clear end to capture                                           |

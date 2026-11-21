@@ -6,6 +6,7 @@ import {
   Check,
   ChevronRight,
   Clock3,
+  EyeOff,
   FileText,
   Heart,
   Info,
@@ -130,6 +131,7 @@ export default function App() {
   const [consent, setConsent] = useState(false);
   const [wantPulse, setWantPulse] = useState(true);
   const [wantTalking, setWantTalking] = useState(true);
+  const [showCameraPreview, setShowCameraPreview] = useState(false);
   const [telemetryOpen, setTelemetryOpen] = useState(false);
   const [simulationOpen, setSimulationOpen] = useState(false);
   const [simPulse, setSimPulse] = useState(72);
@@ -297,7 +299,7 @@ export default function App() {
       node.srcObject = stream;
       if (stream) void node.play().catch(() => {});
     }
-  }, [stream, phase]);
+  }, [stream, phase, showCameraPreview]);
   useEffect(() => {
     if (source !== "simulation" || !connected) return;
     const emit = () => {
@@ -656,12 +658,14 @@ export default function App() {
       pulseTs: 0,
       breathingTs: 0,
     };
+    let lastTransport: TransportStats | null = null;
     const connection = new CameraConnection({
       onStream: (next) => {
         if (camera.current === connection) setStream(next);
       },
       onSignal: (next, stats) => {
         if (camera.current !== connection) return;
+        lastTransport = stats;
         updateSignal(next);
         setTransport(stats);
       },
@@ -671,7 +675,11 @@ export default function App() {
       },
       onError: (message) => {
         if (camera.current !== connection) return;
-        setError(message);
+        setError(
+          lastTransport && lastTransport.frames > 0
+            ? `${message} Last received camera rate: ${lastTransport.fps.toFixed(0)} fps.`
+            : message,
+        );
         setConnected(false);
         setApiKey("");
         setConsent(false);
@@ -777,6 +785,31 @@ export default function App() {
     (marker) => marker.reason === "pause",
   ).length;
   const scriptText = markedScript(noteScript, reviewMarkers);
+
+  const renderCameraPreview = () => (
+    <div className="camera-preview">
+      {showCameraPreview ? (
+        <video ref={cameraPreview} muted playsInline autoPlay />
+      ) : (
+        <div
+          className="camera-preview-hidden"
+          role="img"
+          aria-label="Camera preview hidden"
+        >
+          <EyeOff size={20} aria-hidden="true" />
+          <span>Preview hidden</span>
+        </div>
+      )}
+      <button
+        type="button"
+        className="camera-preview-toggle"
+        aria-pressed={showCameraPreview}
+        onClick={() => setShowCameraPreview((value) => !value)}
+      >
+        {showCameraPreview ? "Hide preview" : "Show preview"}
+      </button>
+    </div>
+  );
 
   return (
     <div className={`app-shell ${focusMode ? "is-focused" : ""}`}>
@@ -1044,7 +1077,7 @@ export default function App() {
               phase === "connecting" ||
               (stream && phase === "ready")) && (
               <div className="calibration-card">
-                <video ref={cameraPreview} muted playsInline autoPlay />
+                {renderCameraPreview()}
                 <div>
                   <span className="eyebrow">
                     {phase === "ready"
@@ -1108,9 +1141,10 @@ export default function App() {
             )}
             {stream && running && (
               <div className="live-camera-strip">
-                <video ref={cameraPreview} muted playsInline autoPlay />
+                {renderCameraPreview()}
                 <span>
                   <span className="signal-dot green" /> Live camera ·{" "}
+                  {!showCameraPreview && "Preview hidden · "}
                   {signal.validation
                     ? signal.hint || "Adjust your framing"
                     : "Your script stays in this page"}
@@ -1481,6 +1515,20 @@ export default function App() {
               />{" "}
               Detect speaking pauses
             </label>
+          </div>
+          <div className="camera-preview-option">
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={showCameraPreview}
+                onChange={(event) => setShowCameraPreview(event.target.checked)}
+              />{" "}
+              Show camera preview
+            </label>
+            <p className="field-help">
+              Keep the preview hidden to record just the studio and live
+              readings. The camera still sends frames for Presage processing.
+            </p>
           </div>
           <div className="consent-box">
             <ShieldCheck size={19} />

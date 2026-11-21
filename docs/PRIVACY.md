@@ -8,6 +8,8 @@ Cadence is an opt-in presentation rehearsal tool. It does not diagnose or treat 
 
 ## Where data goes
 
+The camera preview starts hidden. **Show camera preview**, **Show preview**, and **Hide preview** control the on-screen image only. Camera capture and Presage processing continue while the preview is hidden. This lets a user record the studio and live metrics without displaying their face; it does not prevent camera frames from reaching the VPS.
+
 In live mode, the phone browser captures camera frames and sends JPEG frames through HTTPS/WSS to the app's VPS. A per-session worker decodes them to RGB in memory and supplies them to the native Presage SmartSpectra SDK. The VPS returns SDK-reported metrics and quality information through the same connection.
 
 This is remote processing. **It would be inaccurate to say camera frames never leave the phone or are never shared with a server.** Cadence discloses that transfer before consent. Simulation sends no camera frames.
@@ -36,4 +38,4 @@ Switching off **Enable Camera & Biometric Pacing** stops camera tracks and disco
 
 ## Demonstrations
 
-Automated simulation videos and test fixtures use invented signals and are labeled accordingly. They are not proof of live Presage physiological readings. A user can choose to make a separate phone screen recording for the challenge; that recording is outside Cadence's camera-processing path and may include their face and visible metrics. Review it before publishing.
+Automated simulation videos and test fixtures use invented signals and are labeled accordingly. They are not proof of live Presage physiological readings. A user can choose to make a separate phone screen recording for the challenge; that recording is outside Cadence's camera-processing path. Keeping the preview hidden allows a recording of the studio and real live metrics without the camera image. Visible metrics and anything else shown on the phone screen can still appear in that recording. Review it before publishing.

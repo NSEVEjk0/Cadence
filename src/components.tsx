@@ -242,9 +242,9 @@ export function Telemetry({
               </b>
             </div>
           )}
-          {!simulated && connected && (
+          {!simulated && (connected || transport.frames > 0) && (
             <div className="telemetry-row">
-              <span>Camera feed</span>
+              <span>{connected ? "Camera feed" : "Last camera feed"}</span>
               <b>
                 {transport.fps.toFixed(0)} fps · {transport.width}×
                 {transport.height}

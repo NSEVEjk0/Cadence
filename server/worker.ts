@@ -8,6 +8,7 @@ import {
 } from "@smartspectra/node-sdk";
 import { decodeMetrics } from "@smartspectra/node-sdk/messages";
 import { mergeMetrics } from "../shared/metrics";
+import { FrameQueue } from "./frame-queue";
 import {
   emptySignal,
   type ServerMessage,
@@ -19,7 +20,6 @@ sharp.concurrency(1);
 let sdk: SmartSpectraSDK | null = null;
 let apiKey = "";
 let stopped = false;
-let busy = false;
 let signal: SignalSnapshot = emptySignal();
 let frames = 0;
 let width = 0;
@@ -61,6 +61,7 @@ function safeMessage(code: number, message: string): string {
 async function stop(): Promise<void> {
   if (stopped) return;
   stopped = true;
+  frameQueue.stop();
   try {
     await sdk?.stopAsync();
     await sdk?.destroy();
@@ -73,18 +74,77 @@ async function stop(): Promise<void> {
   process.exit(0);
 }
 
+type CameraFrame = {
+  type: "frame";
+  width: number;
+  height: number;
+  timestampUs: number;
+  jpeg: Buffer;
+};
+
+async function fail(error: unknown): Promise<void> {
+  const code =
+    typeof (error as { code?: unknown })?.code === "number"
+      ? Number((error as { code: number }).code)
+      : 500;
+  send({
+    type: "error",
+    code,
+    message: safeMessage(
+      code,
+      error instanceof Error ? error.message : "Camera processing failed.",
+    ),
+    retryable: false,
+  });
+  await stop();
+}
+
+const frameQueue = new FrameQueue<CameraFrame>(async (message) => {
+  if (stopped || !sdk) return;
+  // Decode stays in RAM; the application has no video-recording path.
+  const { data, info } = await sharp(message.jpeg, {
+    limitInputPixels: 1280 * 720,
+    failOn: "warning",
+  })
+    .toColourspace("srgb")
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (
+    info.width !== message.width ||
+    info.height !== message.height ||
+    info.channels !== 3
+  )
+    throw new Error("The camera frame dimensions changed. Please reconnect.");
+  if (stopped || !sdk) return;
+  sdk.sendFrame(
+    data,
+    info.width,
+    info.height,
+    info.width * 3,
+    PixelFormat.kRGB,
+    message.timestampUs,
+  );
+  frames++;
+  width = info.width;
+  height = info.height;
+  frameTimes.push(Date.now());
+  emitSignal(Date.now());
+});
+
 process.on(
   "message",
-  async (message: {
-    type: string;
-    apiKey?: string;
-    pulse?: boolean;
-    talking?: boolean;
-    width?: number;
-    height?: number;
-    timestampUs?: number;
-    jpeg?: Buffer;
-  }) => {
+  async (
+    message:
+      | CameraFrame
+      | {
+          type: "configure";
+          apiKey: string;
+          pulse?: boolean;
+          talking?: boolean;
+        }
+      | { type: "stop" },
+  ) => {
     if (stopped) return;
     try {
       if (message.type === "stop") {
@@ -141,62 +201,19 @@ process.on(
         return;
       }
       if (message.type === "frame") {
-        if (busy || !sdk) {
-          send({ type: "ack", timestampUs: message.timestampUs ?? 0 });
+        if (!sdk) {
+          send({ type: "ack", timestampUs: message.timestampUs });
           return;
         }
-        busy = true;
-        try {
-          // decode stays in RAM; the application has no video-recording path.
-          const { data, info } = await sharp(message.jpeg, {
-            limitInputPixels: 1280 * 720,
-            failOn: "warning",
-          })
-            .toColourspace("srgb")
-            .removeAlpha()
-            .raw()
-            .toBuffer({ resolveWithObject: true });
-          if (
-            info.width !== message.width ||
-            info.height !== message.height ||
-            info.channels !== 3
-          )
-            throw new Error(
-              "The camera frame dimensions changed. Please reconnect.",
-            );
-          if (stopped) return;
-          sdk.sendFrame(
-            data,
-            info.width,
-            info.height,
-            info.width * 3,
-            PixelFormat.kRGB,
-            message.timestampUs!,
+        void frameQueue
+          .enqueue(message)
+          .catch(fail)
+          .finally(() =>
+            send({ type: "ack", timestampUs: message.timestampUs }),
           );
-          frames++;
-          width = info.width;
-          height = info.height;
-          frameTimes.push(Date.now());
-        } finally {
-          busy = false;
-          send({ type: "ack", timestampUs: message.timestampUs ?? 0 });
-        }
       }
     } catch (error) {
-      const code =
-        typeof (error as { code?: unknown })?.code === "number"
-          ? Number((error as { code: number }).code)
-          : 500;
-      send({
-        type: "error",
-        code,
-        message: safeMessage(
-          code,
-          error instanceof Error ? error.message : "Camera processing failed.",
-        ),
-        retryable: false,
-      });
-      await stop();
+      await fail(error);
     }
   },
 );

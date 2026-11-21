@@ -4,6 +4,9 @@ import type {
   TransportStats,
 } from "../shared/types";
 
+const MAX_FRAME_SIDE = 480;
+const JPEG_QUALITY = 0.9;
+
 export interface CameraCallbacks {
   onStream: (stream: MediaStream | null) => void;
   onSignal: (signal: SignalSnapshot, transport: TransportStats) => void;
@@ -18,9 +21,11 @@ export class CameraConnection {
   private frameCallback = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
-  private capturing = false;
+  private encoding = 0;
+  private delivery = Promise.resolve();
   private inflight = new Map<number, number>();
-  private lastFrameTime = 0;
+  private cameraFrameTimes: number[] = [];
+  private sentFrameTimes: number[] = [];
   private lastTimestamp = 0;
   private visibility = () => {
     if (document.hidden) {
@@ -154,8 +159,12 @@ export class CameraConnection {
           this.callbacks.onSignal(normalized, message.transport);
         }
         if (message.type === "error") {
+          const rates =
+            message.code === 14
+              ? ` Phone camera rate: ${this.rate(this.cameraFrameTimes).toFixed(0)} fps; phone sending rate: ${this.rate(this.sentFrameTimes).toFixed(0)} fps.`
+              : "";
           this.stop();
-          this.callbacks.onError(message.message);
+          this.callbacks.onError(message.message + rates);
         }
       };
       socket.onclose = () => {
@@ -175,8 +184,14 @@ export class CameraConnection {
         }
       };
       document.addEventListener("visibilitychange", this.visibility);
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d", { alpha: false });
+      const canvas =
+        typeof OffscreenCanvas === "function"
+          ? new OffscreenCanvas(1, 1)
+          : document.createElement("canvas");
+      const context =
+        canvas instanceof HTMLCanvasElement
+          ? canvas.getContext("2d", { alpha: false })
+          : canvas.getContext("2d", { alpha: false });
       if (!context)
         throw new Error(
           "This browser cannot prepare camera frames. Try Safari or Chrome.",
@@ -184,7 +199,10 @@ export class CameraConnection {
       const capture = (now: number) => {
         if (this.stopped || !this.video) return;
         this.schedule(capture);
+        this.countFrame(this.cameraFrameTimes, now);
         // Bound memory and latency instead of queuing an old video stream.
+        // Acknowledgements can take hundreds of milliseconds on mobile. Allow
+        // one second of frames in flight so that latency does not cap 30 fps.
         for (const [timestamp, sent] of this.inflight) {
           if (performance.now() - sent > 10_000) {
             this.stop();
@@ -195,17 +213,15 @@ export class CameraConnection {
           }
         }
         if (
-          this.capturing ||
-          now - this.lastFrameTime < 31 ||
-          this.inflight.size >= 3 ||
+          this.encoding >= 3 ||
+          this.inflight.size >= 30 ||
           socket.bufferedAmount > 256_000 ||
           socket.readyState !== WebSocket.OPEN
         )
           return;
-        this.lastFrameTime = now;
         const scale = Math.min(
           1,
-          640 / Math.max(video.videoWidth, video.videoHeight),
+          MAX_FRAME_SIDE / Math.max(video.videoWidth, video.videoHeight),
         );
         const width = Math.floor((video.videoWidth * scale) / 2) * 2;
         const height = Math.floor((video.videoHeight * scale) / 2) * 2;
@@ -213,34 +229,57 @@ export class CameraConnection {
         if (canvas.width !== width) canvas.width = width;
         if (canvas.height !== height) canvas.height = height;
         context.drawImage(video, 0, 0, width, height);
-        this.capturing = true;
+        this.encoding++;
         const timestampUs = Math.max(
           this.lastTimestamp + 1,
           Math.round(now * 1000),
         );
         this.lastTimestamp = timestampUs;
-        canvas.toBlob(
-          async (blob) => {
-            try {
-              if (!blob || this.stopped || socket.readyState !== WebSocket.OPEN)
-                return;
-              const jpeg = new Uint8Array(await blob.arrayBuffer());
-              if (this.stopped || socket.readyState !== WebSocket.OPEN) return;
-              const frame = new Uint8Array(16 + jpeg.length);
-              const header = new DataView(frame.buffer);
-              header.setUint16(0, width, true);
-              header.setUint16(2, height, true);
-              header.setFloat64(8, timestampUs, true);
-              frame.set(jpeg, 16);
-              this.inflight.set(timestampUs, performance.now());
-              socket.send(frame);
-            } finally {
-              this.capturing = false;
+        // Chrome may finish an encode after the next camera frame is ready.
+        // Prepare at most three images at once, then send them in capture order.
+        // OffscreenCanvas avoids Chrome's idle scheduling in canvas.toBlob.
+        const image =
+          canvas instanceof HTMLCanvasElement
+            ? new Promise<Blob | null>((resolve) =>
+                canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY),
+              )
+            : canvas.convertToBlob({
+                type: "image/jpeg",
+                quality: JPEG_QUALITY,
+              });
+        this.delivery = this.delivery.then(async () => {
+          try {
+            const blob = await image;
+            if (!blob || this.stopped || socket.readyState !== WebSocket.OPEN)
+              return;
+            const jpeg = new Uint8Array(await blob.arrayBuffer());
+            if (
+              this.stopped ||
+              socket.readyState !== WebSocket.OPEN ||
+              this.inflight.size >= 30 ||
+              socket.bufferedAmount > 256_000
+            )
+              return;
+            const frame = new Uint8Array(16 + jpeg.length);
+            const header = new DataView(frame.buffer);
+            header.setUint16(0, width, true);
+            header.setUint16(2, height, true);
+            header.setFloat64(8, timestampUs, true);
+            frame.set(jpeg, 16);
+            this.inflight.set(timestampUs, performance.now());
+            socket.send(frame);
+            this.countFrame(this.sentFrameTimes, performance.now());
+          } catch {
+            if (!this.stopped) {
+              this.stop();
+              this.callbacks.onError(
+                "This browser could not prepare camera frames. Please reconnect.",
+              );
             }
-          },
-          "image/jpeg",
-          0.92,
-        );
+          } finally {
+            this.encoding--;
+          }
+        });
       };
       this.schedule(capture);
     } catch (error) {
@@ -257,6 +296,18 @@ export class CameraConnection {
         throw new Error("No camera was found. Open Cadence on your phone.");
       throw error;
     }
+  }
+
+  private countFrame(times: number[], now: number): void {
+    times.push(now);
+    while (times.length && times[0] < now - 2_000) times.shift();
+  }
+
+  private rate(times: number[]): number {
+    const recent = times.filter((time) => time >= performance.now() - 2_000);
+    if (recent.length < 2) return 0;
+    const elapsed = recent[recent.length - 1] - recent[0];
+    return elapsed > 0 ? ((recent.length - 1) * 1000) / elapsed : 0;
   }
 
   private schedule(callback: (now: number) => void): void {
