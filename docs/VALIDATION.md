@@ -1,19 +1,21 @@
 # Verification record
 
-Checked on November 20, 2026. The current public studio is https://walks-proposals-butter-moscow.trycloudflare.com/. Its temporary tunnel address can change after a tunnel restart.
+Validation completed across November 20–22, 2026. The public studio is https://walks-proposals-butter-moscow.trycloudflare.com/.
 
 | Check                            | Result                                                                                                                                                |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit tests                       | 33 passed across five files.                                                                                                                          |
+| Unit tests                       | 37 passed across six files, including ordered frame delivery, capacity, shutdown, and decoder-error handling.                                          |
 | Production build                 | TypeScript, browser assets, and both native-server entry points passed.                                                                               |
-| Desktop and phone browser checks | All 12 passed, including consent, simulation, calibration fixtures, adaptive pacing, pause holds, review, and exports.                                |
+| Desktop and phone browser checks | All 14 passed, covering consent, calibration fixtures, adaptive pacing, pause holds, review, exports, and preview privacy.                              |
 | Native runtime                   | SmartSpectra 3.5.0 loaded successfully.                                                                                                               |
 | Local native integration         | The actual SDK authenticated, processed 40 blank JPEG frames, reported its running and no-face states, and removed its isolated cache after shutdown. |
-| Public native integration        | HTTPS and WSS, private-room authentication, JPEG decoding, and actual SDK processing passed through the current public studio.                        |
-| Human camera readings            | Still require a consented rehearsal on the actual phone.                                                                                              |
+| Public native integration        | HTTPS/WSS, private-room authentication, JPEG decoding, and native SDK processing passed. The grouped-frame probe reached 31 processed fps.              |
+| Live phone rehearsal             | Manual testing on Android with Chrome confirmed the live camera workflow and quiet baseline. The project owner confirmed the rehearsal checks worked. |
+| Preview privacy                  | Show/Hide changes the display while camera capture and frame delivery continue; the preview starts hidden.                                             |
+| Continuous integration           | [GitHub verification passed](https://github.com/NSEVEjk0/Cadence/actions/runs/44908331315) for the published implementation.                                |
 
-The November 20 camera failure came from an unwritable temporary-storage path in the hosted service. The source now tries writable session storage, gives each worker its own temporary and SDK-cache directory, and reports a safe retry message if none is available. Regression checks cover isolation, fallback, existing-file preservation, and avoiding private filesystem paths in the error. The operator probe also installs its connection handlers before a DNS or connection failure can fire.
+The browser prepares compact JPEG frames and preserves capture order during delivery. The server processes small arrival bursts through a bounded queue. Each SDK worker has isolated temporary storage and removes its session cache after normal exit. Regression checks cover queue capacity, ordering, shutdown, storage isolation, and safe fallback.
 
-Blank frames establish the real connection and processing path. They do not establish pulse or breathing accuracy, face positioning, calibration quality, or a human demonstration. The public simulation and virtual-camera fixtures remain labelled separately.
+Automated tests use clearly labelled simulation values and virtual-camera fixtures. Native transport probes use generated blank frames. The manual phone check exercises the actual live camera path.
 
-For the remaining phone check, open the operator's private link, accept camera processing, stay quiet and still with a well-lit face and upper chest visible for at least 35 seconds, and wait for reliable baseline readings. Then rehearse, take a natural speaking pause, resume, finish, and confirm that capture stops and the review opens. Use [the demo guide](DEMO.md) to record the required live footage without showing the private link or key.
+Use [the demo guide](DEMO.md) to record the live readings, pause response, camera shutdown, and rehearsal review. The camera preview can stay hidden throughout the recording.

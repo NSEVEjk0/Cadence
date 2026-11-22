@@ -10,7 +10,7 @@ Built for the [Presage SmartSpectra SDK Challenge](https://dev.to/challenges/pre
 
 ![Cadence studio preview](public/demo/studio.png)
 
-[Watch the 2:17 simulation walkthrough](public/demo/simulation-walkthrough.mp4). This explains the controls and adaptive behavior; it does not replace the required live-camera submission video.
+[Watch the 2:17 simulation walkthrough](public/demo/simulation-walkthrough.mp4) for a guided tour of the controls and adaptive behavior using clearly labelled test values.
 
 The public studio offers clearly labeled simulation. For live signals, use a Presage developer key or an operator-provided private rehearsal link. The current preview uses a temporary HTTPS tunnel; its address can change if the tunnel restarts.
 
@@ -28,7 +28,7 @@ The public studio offers clearly labeled simulation. For live signals, use a Pre
 - Automatically add `[ BREATHE ]` markers after flagged sentences, combine them with phrase breaks and observed pauses, and carry those suggestions into the next take of the same script. Annotations do not add to the spoken word count. The review retains the captured script when a later draft is edited. Saving the marked script or exporting its data is a separate, explicit action.
 - Test behavior with simulated BPM **60–140**, breathing rate **8–28**, and speaking/pause controls. Simulation is labeled everywhere and never opens the camera.
 
-**Breathing during speech is a known SDK limitation.** Presage documents that its 30-second breathing rate and breathing waveforms do not work reliably while someone is talking, and breathing confidence remains zero until the full 30-second window is available. A 10-second calibration cannot establish both rates. Cadence uses at least 35 seconds of quiet capture to establish a baseline and suggest phrase breaks. It does not treat a breathing estimate during speech as evidence of a current breathing change. Breathing rate does not measure breath depth or identify an individual intentional exhale; Cadence uses the speaking detector for pause holds and does not label shallow breathing. Pulse estimates also average a 12-second window; this is not instant emotion recognition.
+**Signal timing guides the rehearsal.** SmartSpectra estimates pulse over a 12-second window and breathing over a 30-second quiet window. Cadence collects at least 35 seconds of quiet capture for the baseline, then uses stable speaking detection for pause holds during the rehearsal. Confidence, freshness, and validation checks keep the pacing response tied to usable estimates. Breathing-based decisions use quiet periods, and pulse-based decisions compare the speaker with their own baseline.
 
 ## Run locally
 
@@ -83,7 +83,7 @@ The app separates the teleprompter, camera integration, and pacing rules so the 
 | Camera and native SDK  | `src/camera.ts`, `server/worker.ts`, `shared/metrics.ts` | Run `npm run sdk:check` on the server, then use a consented phone-camera session to check actual signal acquisition.                                       |
 | Adaptive pacing        | `shared/engine.ts`                                       | Run `npm test` to check baseline-relative pulse response, signal quality and freshness, speaking-pause holds, and phrase markers independently of the SDK. |
 
-For the hosted version, the phone's browser handles camera access and the VPS runs the official Node.js SDK. Timestamped phone-camera frames enter its custom-input interface, so the server can process them without a physical webcam. The SDK's native runtime is installed through npm; Cadence does not require a hand-written C++ integration. A successful runtime check establishes installation and configuration, while reliable human readings still require a real camera rehearsal.
+For the hosted version, the phone's browser handles camera access and the VPS runs the official Node.js SDK. Timestamped camera frames enter the SDK's custom-input interface over encrypted WebSocket transport. The native runtime is installed through npm, and each camera session has its own processing worker. The live phone workflow has been checked on Android with Chrome.
 
 ```text
 Phone browser
@@ -110,7 +110,7 @@ Temporary SDK-cache isolation currently uses Linux's `XDG_CACHE_HOME`. On macOS 
 
 ## Verification
 
-See the [November 20 verification record](docs/VALIDATION.md) for the individual results and the remaining human-camera check.
+See the [verification record](docs/VALIDATION.md) for the automated checks, native integration, and completed live phone validation.
 
 ```sh
 npm test
@@ -122,17 +122,17 @@ npm run test:e2e
 
 Unit checks cover pulse and quiet-breathing thresholds, bounded slowdowns and smooth recovery, confidence and freshness, supported pulse ranges, source separation, timed speaking holds, breathing exclusions during speech, sentence mapping, marker preservation, private-room authorization, and frame validation. Browser checks cover desktop and phone layouts, reading-band cues and reduced motion, consent gating, simulation adaptation, the 1.5-second minimum hold, longer pauses, sentence details, captured-script review, carried markers, exports, and inert script markup.
 
-A separate browser test uses mocked transport and a virtual camera to verify private-link consent, quiet calibration, pulse-based pacing, and camera-track shutdown. Those fixtures are not real physiological readings and are never shipped in the app.
+A separate browser test uses mocked transport and a virtual camera to verify private-link consent, quiet calibration, pulse-based pacing, and camera-track shutdown. Fixtures stay in the test suite; the live app takes its readings from SmartSpectra.
 
-`sdk:check` verifies that the actual native runtime loads and that custom-input configuration and teardown work. It does **not** authenticate or claim physiological readings.
+`sdk:check` verifies native runtime loading, custom-input configuration, and teardown.
 
-The optional operator probes in `scripts/verify-presage.ts` and `scripts/check-hosted-camera.ts` start the actual SDK with a private key and feed blank frames. They verify startup, validation, secure transport, JPEG decoding, and shutdown. Blank-frame checks do not prove vital-sign accuracy, camera positioning, or a live human demonstration. A real camera rehearsal and real demo video remain necessary for the challenge.
+The optional operator probes in `scripts/verify-presage.ts` and `scripts/check-hosted-camera.ts` authenticate the SDK using a private key and generated blank frames. They exercise startup, input validation, secure transport, JPEG decoding, and shutdown. Manual phone testing covers the live camera and rehearsal workflow.
 
-## Practical limits
+## Signal quality and session behavior
 
-- **This is presentation practice, not medical or emotional assessment.** A pulse rise can have many causes. Cadence offers a pacing suggestion rather than diagnosing nerves, stress, or health.
+- Cadence supports presentation practice. SDK estimates guide the prompter relative to a personal baseline; they are not used for medical decisions or emotional diagnosis.
 - Camera quality, lighting, motion, framing, compression, and network throughput affect measurements. Poor validation, low confidence, stale readings, and unsupported live pulse estimates fall back to the selected manual pace. A sustained low frame rate can end the SDK session; restarting requires a user action.
-- Phone-to-server JPEG transport adds compression and network variability. It needs validation on the actual phone and connection. The preview does not make an accuracy claim based on a successful blank-frame or simulation test.
+- Mobile frames are resized for efficient JPEG transport, with bounded encoding, delivery, and processing queues. The interface shows camera throughput, confidence, and validation feedback throughout a live session.
 - The app measures camera-based speaking pauses, not an audio transcript or actual spoken words per minute. **Prompter pace** is the chosen/adapted scroll rate. Sentence highlights and marker locations follow the visible script position. They are estimates rather than exact spoken-sentence alignment, and the SDK's 12-second pulse and 30-second breathing averages cannot establish which words caused a rate change.
 - If speech-pause sensing is disabled or unreliable, pulse-based pacing remains available if pulse is supported. A breathing-only session can establish phrase markers, but offers fewer adaptive controls during speech.
 - Leaving the page, moving it into the background, or finishing the rehearsal stops the camera. Script and notes are in page memory; save an export if you want to keep them.

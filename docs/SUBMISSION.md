@@ -4,7 +4,9 @@ Official challenge: https://dev.to/challenges/presage-2026-11-04
 
 The deadline is **November 23, 2026, 07:59 UTC / 08:59 WAT**, equivalent to November 22 at 11:59 p.m. PST. Publish the DEV post using the organizer's official template and tags `devchallenge` and `presagechallenge`. This is an individual entry, for participants age 18 or older; each person may submit once.
 
-Use the notes below to write the submission in your own words. The repository and a video are not a submission until the DEV post is published.
+The [prepared submission page](https://walks-proposals-butter-moscow.trycloudflare.com/submission/) includes the title, tags, cover image, code link, and all required sections. Add the public or unlisted live demo URL, review the text, and open the completed post in DEV. Publishing that post completes the entry.
+
+The reusable Markdown is in [the submission template](../public/submission/post.md). The guide below maps the entry to the organizer's requested sections.
 
 ## What I Built
 

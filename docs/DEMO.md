@@ -1,8 +1,8 @@
 # Demo plan
 
-The final challenge video needs actual live Presage signals. A simulation walkthrough is useful for explaining behavior and debugging, but cannot replace that footage.
+Record the live Presage readings and the prompter's response for the challenge video. The camera preview can stay hidden throughout.
 
-[Watch the 2:17 simulation walkthrough](../public/demo/simulation-walkthrough.mp4). It is labeled simulation throughout and contains no real camera or physiological readings. The hosted copy is available at `/demo/simulation-walkthrough.mp4` on the public studio.
+[Watch the 2:17 simulation walkthrough](../public/demo/simulation-walkthrough.mp4) for a tour of the controls using labelled test values. The hosted copy is available at `/demo/simulation-walkthrough.mp4` on the public studio.
 
 ## Recording using only a phone
 

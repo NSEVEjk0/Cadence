@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Cadence — DEV submission</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 28px 18px; background: #f7f5ef; color: #24342b; font: 16px/1.6 system-ui, sans-serif; }
+      main { max-width: 760px; margin: auto; }
+      h1 { margin: 0 0 8px; font-family: Georgia, serif; font-weight: 500; font-size: 36px; }
+      p { margin: 0 0 22px; }
+      form { padding: 24px; border: 1px solid #dce3d6; border-radius: 14px; background: white; }
+      label { display: block; margin: 18px 0 7px; font-weight: 600; }
+      input, textarea { width: 100%; border: 1px solid #c7d0c2; border-radius: 7px; padding: 12px; font: inherit; color: inherit; }
+      textarea { min-height: 360px; font-size: 13px; line-height: 1.6; }
+      button { margin: 18px 8px 0 0; border: 0; border-radius: 7px; padding: 12px 18px; background: #345b3e; color: white; font: inherit; cursor: pointer; }
+      button:disabled { opacity: .5; cursor: wait; }
+      #copy-post { color: #345b3e; background: #edf2e8; }
+      .help { font-size: 14px; color: #52614e; margin: 8px 0; }
+      #status { margin-top: 12px; }
+      a { color: #345b3e; }
+      :focus-visible { outline: 3px solid #9aac76; outline-offset: 3px; }
+      @media (max-width: 480px) { form { padding: 17px; } h1 { font-size: 29px; } }
+    </style>
+    <script type="module" src="./prepare.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Cadence submission</h1>
+      <p>Add your demo link, review the prepared post, then open it in DEV and publish from your account.</p>
+      <form id="submission-form">
+        <label for="demo-url">Public or unlisted live demo URL</label>
+        <input id="demo-url" type="url" placeholder="https://www.youtube.com/watch?v=…" required />
+        <p class="help">Use a recording with the camera preview hidden if you prefer to keep your face out of the video.</p>
+        <label for="post-content">Submission post</label>
+        <textarea id="post-content" spellcheck="true" aria-describedby="editor-help"></textarea>
+        <p id="editor-help" class="help">The title, challenge tags, cover image, repository, and required sections are included. You can edit the text before opening DEV.</p>
+        <button id="open-dev" type="submit" disabled>Open prepared DEV post</button>
+        <button id="copy-post" type="button" disabled>Copy post</button>
+        <p id="status" class="help" role="status" aria-live="polite"></p>
+      </form>
+      <p class="help">Deadline: 23 November 2026, 08:59 WAT / 07:59 UTC. Sign in to DEV first; its Publish button completes the submission.</p>
+      <p class="help"><a href="https://dev.to/challenges/presage-2026-11-04" target="_blank" rel="noopener noreferrer">Official challenge</a> · <a href="https://github.com/NSEVEjk0/Cadence" target="_blank" rel="noopener noreferrer">Source repository</a></p>
+    </main>
+  </body>
+</html>

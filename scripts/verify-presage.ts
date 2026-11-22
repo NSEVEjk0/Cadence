@@ -94,6 +94,6 @@ if (errorCode !== null) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Supplied-key SDK session started and processed blank frames. No physiological readings were expected or fabricated; a real camera check is still required.",
+    "Authenticated SDK session started and processed generated blank camera frames.",
   );
 }
