@@ -15,9 +15,11 @@ The experience runs in a phone browser. A Linux server runs the official Presage
 
 ## Demo
 
-[Watch the live demo]({{LIVE_DEMO_URL}})
+[Watch the Cadence product overview]({{LIVE_DEMO_URL}})
 
-[Open Cadence]({{STUDIO_ORIGIN}}/) · [Controls walkthrough with labelled simulation values]({{STUDIO_ORIGIN}}/demo/simulation-walkthrough.mp4)
+[Open Cadence]({{STUDIO_ORIGIN}}/)
+
+The short overview introduces the editor, reading stage, camera consent, and the benefits of an adaptive rehearsal.
 
 The live phone workflow has been tested on Android with Chrome, including camera connection, quiet calibration, rehearsal, and review. Preview visibility is optional, so a screen recording can show the live interaction without displaying the speaker's face.
 

@@ -14,6 +14,7 @@ function preparedPost() {
 }
 
 try {
+  demo.value = `${location.origin}/demo/cadence-product-overview.mp4`;
   const response = await fetch("./post.md");
   if (!response.ok) throw new Error("The prepared post could not be loaded. Reload this page.");
   content.value = (await response.text()).replaceAll("{{STUDIO_ORIGIN}}", location.origin);

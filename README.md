@@ -10,7 +10,7 @@ Built for the [Presage SmartSpectra SDK Challenge](https://dev.to/challenges/pre
 
 ![Cadence studio preview](public/demo/studio.png)
 
-[Watch the 2:17 simulation walkthrough](public/demo/simulation-walkthrough.mp4) for a guided tour of the controls and adaptive behavior using clearly labelled test values.
+[Watch the 40-second product overview](public/demo/cadence-product-overview.mp4) for a concise introduction to the editor, reading stage, and camera consent.
 
 The public studio offers clearly labeled simulation. For live signals, use a Presage developer key or an operator-provided private rehearsal link. The current preview uses a temporary HTTPS tunnel; its address can change if the tunnel restarts.
 
