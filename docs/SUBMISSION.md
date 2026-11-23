@@ -2,9 +2,11 @@
 
 Official challenge: https://dev.to/challenges/presage-2026-11-04
 
+Published entry: [Cadence — a little room to breathe](https://dev.to/ckayy/cadence-a-little-room-to-breathe-18f2), published November 23, 2026 at 04:28 UTC with both challenge tags.
+
 The deadline is **November 23, 2026, 07:59 UTC / 08:59 WAT**, equivalent to November 22 at 11:59 p.m. PST. Publish the DEV post using the organizer's official template and tags `devchallenge` and `presagechallenge`. This is an individual entry, for participants age 18 or older; each person may submit once.
 
-The [prepared submission page](https://walks-proposals-butter-moscow.trycloudflare.com/submission/) includes the title, tags, cover image, code link, and all required sections. Add the public or unlisted live demo URL, review the text, and open the completed post in DEV. Publishing that post completes the entry.
+The [submission page](https://walks-proposals-butter-moscow.trycloudflare.com/submission/) links to the published entry and narrated product video. The DEV post includes the title, tags, cover image, code link, and required sections.
 
 The reusable Markdown is in [the submission template](../public/submission/post.md). The guide below maps the entry to the organizer's requested sections.
 
